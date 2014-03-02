@@ -1,0 +1,3 @@
+[submodule "recycled"]
+	path = recycled
+	url = git@github.com:zorceta/recycled.git
