@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
     Router router;
     router.add("/", PageHandler::create);
     router.add("/page/(\\d*)(?:/|)", PageHandler::create);
+    router.add("/article/(.*)(?:/|)", ArticleHandler::create);
     router.add("/static/(.*)", StaticFileHandler::create);
     if (argc == 2) {
         config_path = argv[1];

@@ -13,12 +13,18 @@ extern Global global;
 std::string DustbinHandler::get_setting(std::string key) {
     using namespace mongo;
     BSONObj p = global.db_conn.findOne(global.db_name + ".setting", QUERY("key" << key));
+    if (!p.hasField("value")) {
+        return "";
+    }
     return p.getStringField("value");
 }
 
 int DustbinHandler::get_int_setting(std::string key) {
     using namespace mongo;
     BSONObj p = global.db_conn.findOne(global.db_name + ".setting", QUERY("key" << key));
+    if (!p.hasField("value")) {
+        return 0;
+    }
     return p.getIntField("value");
 }
 
@@ -46,13 +52,16 @@ std::string DustbinHandler::format_time(std::string format, time_t timestamp) {
     return buffer;
 }
 
+void DustbinHandler::on404()
+{
+    //TODO
+}
+
 bool PageHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
-    TemplateDictionary dict("page");
-    set_template_dict(&dict);
     string page_str = this->get_regex_result(1);
     int page = 1;
     if (page_str != "") {
@@ -64,6 +73,11 @@ bool PageHandler::get() {
     int articles_count = 
      global.db_conn.count(global.db_name + ".article", BSONObj());
     int pages = ceil(double(articles_count) / articles_per_page);
+    if (page > pages) {
+        this->on404();
+    }
+    TemplateDictionary dict("page");
+    set_template_dict(&dict);
     if (page < pages) {
         dict.SetIntValue("next_page", page + 1);
         dict.ShowSection("next");
@@ -91,5 +105,37 @@ bool PageHandler::get() {
         article->ShowSection("articles");
     }
     this->render("page", &dict);
+    return true;
+}
+
+bool ArticleHandler::get() {
+    using namespace std;
+    using namespace mongo;
+    using namespace ctemplate;
+    this->set_header("Content-Type", "text/html");
+    string id = this->get_regex_result(1);
+    BSONObj p = global.db_conn.findOne(global.db_name + ".article", QUERY("id" << id));
+    if (p.isEmpty()) {
+        this->on404();
+        return true;
+    }
+    TemplateDictionary dict("article");
+    set_template_dict(&dict);
+    string title = p.getStringField("title");
+    string content = p.getStringField("content");
+    int timestamp = p.getIntField("time");
+    string date = format_time(get_setting("time-format"), timestamp);
+    BSONForEach(e, p.getObjectField("tag")) {
+        string tag = e.String();
+        TemplateDictionary* tag_dict = dict.AddSectionDictionary("tags");
+        tag_dict->SetValue("name", tag);
+        tag_dict->ShowSection("tags");
+    }
+    dict.SetValue("disqus_shortname", get_setting("disqus-shortname"));
+    dict.SetValue("id", id);
+    dict.SetValue("title", title);
+    dict.SetValue("content", content);
+    dict.SetValue("date", date);
+    this->render("article", &dict);
     return true;
 }

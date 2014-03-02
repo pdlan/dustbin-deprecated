@@ -1,4 +1,4 @@
 dustbin
 =======
 
-a blog program uses recycled
+a blog program using recycled

@@ -12,6 +12,7 @@ class DustbinHandler : public recycled::Handler {
     static std::string format_time(std::string format, time_t timestamp);
     static void set_template_dict(ctemplate::TemplateDictionary* dict);
     void render(std::string template_name, ctemplate::TemplateDictionary* dict);
+    void on404();
 };
 
 class PageHandler : public DustbinHandler {
@@ -19,6 +20,14 @@ class PageHandler : public DustbinHandler {
     bool get();
     static Handler* create() {
         return new PageHandler;
+    }
+};
+
+class ArticleHandler : public DustbinHandler {
+  public:
+    bool get();
+    static Handler* create() {
+        return new ArticleHandler;
     }
 };
 #endif
