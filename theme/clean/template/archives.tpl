@@ -1,18 +1,44 @@
-{% extends 'layout.html' %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <meta name="viewport" content="width=device-width" />
+    <title>
+Archives | {{site_name}}
+</title>
+    <link rel="stylesheet" href="/static/clean.css" type="text/css" />
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml" title="{{site_name}}" />
+    <link rel="canonical" href=""/>
 
-{% block title %}
-Archives | {{ site.name }}
-{% endblock %}
-
-{% block content %}
-{% for archive in archives %}
-<h2>{{ archive.year }}</h2>
+</head>
+<body>
+    <div id="wrapper" class="yue">
+        <header id="header">
+            <a href="{{site_url}}" id="site_name">{{site_name}}</a>
+            <nav>
+                <a href="/archive/">Archives</a>
+                
+            </nav>
+        </header>
+        <div id="content">
+        
+{{#year}}
+<h2>{{year}}</h2>
 <ol id="posts">
-    {% for post in archive.posts %}
+    {{#articles}}
     <li>
-        <span class="meta">{{ post.date }}</span> <a href="{{ url_for(post) }}">{{ post.title }}</a>
+        <span class="meta">{{date}}</span> <a href="/article/{{id}}">{{title}}</a>
     </li>
-    {% endfor %}
+    {{/articles}}
 </ol>
-{% endfor %}
-{% endblock %}
+{{/year}}
+        </div>
+        <footer id="footer">
+            Powered by <a href="http://github.com/pdlan/dustbin">Dustbin</a>
+            &
+            Theme <a href="https://github.com/whtsky/catsup-theme-clean">Clean</a> by <a href="http://whouz.com">whtsky</a>
+        </footer>
+    </div>
+</body>
+</html>

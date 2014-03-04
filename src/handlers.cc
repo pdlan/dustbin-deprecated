@@ -95,7 +95,7 @@ bool PageHandler::get() {
         string id = p.getStringField("id");
         string title = p.getStringField("title");
         string content = p.getStringField("content");
-        int timestamp = p.getIntField("time");
+        time_t timestamp = p.getIntField("time");
         string date = format_time(get_setting("time-format"), timestamp);
         TemplateDictionary* article = dict.AddSectionDictionary("articles");
         article->SetValue("id", id);
@@ -123,7 +123,7 @@ bool ArticleHandler::get() {
     set_template_dict(&dict);
     string title = p.getStringField("title");
     string content = p.getStringField("content");
-    int timestamp = p.getIntField("time");
+    time_t timestamp = p.getIntField("time");
     string date = format_time(get_setting("time-format"), timestamp);
     BSONForEach(e, p.getObjectField("tag")) {
         string tag = e.String();
@@ -137,5 +137,74 @@ bool ArticleHandler::get() {
     dict.SetValue("content", content);
     dict.SetValue("date", date);
     this->render("article", &dict);
+    return true;
+}
+
+bool ArchivesHandler::get() {
+    using namespace std;
+    using namespace mongo;
+    using namespace ctemplate;
+    this->set_header("Content-Type", "text/html");
+    TemplateDictionary dict("archives");
+    set_template_dict(&dict);
+    auto_ptr<DBClientCursor> cursor = 
+     global.db_conn.query(global.db_name + ".article", BSONObj());
+    TemplateDictionary* year_dict;
+    for (int i = 0; cursor->more();) {
+        BSONObj p = cursor->next();
+        string id = p.getStringField("id");
+        string title = p.getStringField("title");
+        string content = p.getStringField("content");
+        time_t timestamp = p.getIntField("time");
+        tm* timeinfo = localtime(&timestamp);
+        int year = timeinfo->tm_year + 1900;
+        if (year != i) {
+            if (i != 0) {
+                year_dict->ShowSection("year");
+            }
+            year_dict = dict.AddSectionDictionary("year");
+            year_dict->SetIntValue("year", year);
+            i = year;
+        }
+        string date = format_time(get_setting("time-format"), timestamp);
+        TemplateDictionary* article = year_dict->AddSectionDictionary("articles");
+        article->SetValue("id", id);
+        article->SetValue("title", title);
+        article->SetValue("date", date);
+        article->ShowSection("articles");
+    }
+    this->render("archives", &dict);
+    return true;
+}
+
+bool TagHandler::get() {
+    using namespace std;
+    using namespace mongo;
+    using namespace ctemplate;
+    this->set_header("Content-Type", "text/html");
+    TemplateDictionary dict("archives");
+    set_template_dict(&dict);
+    string tag = this->get_regex_result(1);
+    dict.SetValue("tag", tag);
+    auto_ptr<DBClientCursor> cursor = 
+     global.db_conn.query(global.db_name + ".article", QUERY("tag" << tag));
+    int count;
+    for (count = 0; cursor->more(); count ++) {
+        BSONObj p = cursor->next();
+        string id = p.getStringField("id");
+        string title = p.getStringField("title");
+        string content = p.getStringField("content");
+        time_t timestamp = p.getIntField("time");
+        string date = format_time(get_setting("time-format"), timestamp);
+        TemplateDictionary* article = dict.AddSectionDictionary("articles");
+        article->SetValue("id", id);
+        article->SetValue("title", title);
+        article->SetValue("date", date);
+        article->ShowSection("articles");
+    }
+    if (count = 0) {
+        this->on404();
+    } 
+    this->render("tag", &dict);
     return true;
 }

@@ -14,7 +14,7 @@
         <header id="header">
             <a href="{{site_url}}" id="site_name">{{site_name}}</a>
             <nav>
-                <a href="/archive/index.html">Archives</a>
+                <a href="/archive/">Archives</a>
                 
             </nav>
         </header>

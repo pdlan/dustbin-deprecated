@@ -30,4 +30,20 @@ class ArticleHandler : public DustbinHandler {
         return new ArticleHandler;
     }
 };
+
+class ArchivesHandler : public DustbinHandler {
+  public:
+    bool get();
+    static Handler* create() {
+        return new ArchivesHandler;
+    }
+};
+
+class TagHandler : public DustbinHandler {
+  public:
+    bool get();
+    static Handler* create() {
+        return new TagHandler;
+    }
+};
 #endif
