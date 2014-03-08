@@ -1,0 +1,16 @@
+<ol id="posts">
+{{#articles}}
+    <li>
+        <span class="date">{{date}}</span> <a href="/article/{{id}}">{{title}}</a>
+    </li>
+{{/articles}}
+</ol>
+<div id="pagination">
+    <span>Page {{current_page}} of {{pages}}</span>
+    {{#prev}}
+    <a id="prev" href="/page/{{prev_page}}">Prev</a>
+    {{/prev}}
+    {{#next}}
+    <a id="next" href="/page/{{next_page}}/">Next</a>
+    {{/next}} 
+</div>

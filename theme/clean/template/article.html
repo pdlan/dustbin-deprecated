@@ -1,0 +1,17 @@
+<div class="post">
+    <h1 id="title">{{title}}</h1>
+    <div class="date">
+    {{date}}
+    </div>
+    <article>
+    {{content}}
+    </article>
+    <div class="tags">
+        Tagged in :
+        {{#tags}}
+        <a href="/tag/{{name}}">{{name}}</a>
+        {{/tags}}
+    </div>
+<div id="disqus_thread"></div>
+{{comment}}
+ </div>

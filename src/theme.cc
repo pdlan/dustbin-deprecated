@@ -9,21 +9,38 @@ void Theme::set_template_dict(std::string template_name,
     using namespace ctemplate;
     dict->SetValue("site_name", DustbinHandler::get_setting("site-name"));
     dict->SetValue("site_url", DustbinHandler::get_setting("site-url"));
-    if (!this->config["custom_dictionaries"].isNull()) {
-        Json::Value custom_dictionaries = this->config["custom_dictionaries"];
+    if (!this->config["custom-dictionaries"].isNull()) {
+        Json::Value custom_dictionaries = this->config["custom-dictionaries"];
         for (int i = 0; i < custom_dictionaries.size(); i ++) {
-            Json::Value dictionary = custom_dictionaries[i];
-            string name = dictionary["template"].asString();
+            if (custom_dictionaries[i].size() < 2) {
+                continue;
+            }
+            string name = custom_dictionaries[i][0].asString();
             if (name == template_name) {
-                string type = dictionary["type"].asString();
-                string key = dictionary["key"].asString();
-                string value = dictionary["value"].asString();
-                if (type == "string") {
-                    dict->SetValue(key, value);
-                } else if (type == "sub_template") {
-                    string output;
-                    string path = "theme/" + this->theme + "/template/" + value;
-                    ExpandTemplate(path, DO_NOT_STRIP, dict, output);
+                for (int j = 0; j < custom_dictionaries[i][1].size(); j ++) {
+                    Json::Value dictionary = custom_dictionaries[i][1][j];
+                    string type = dictionary["type"].asString();
+                    string key = dictionary["key"].asString();
+                    if (type == "string") {
+                        string value = dictionary["value"].asString();
+                        dict->SetValue(key, value);
+                    } else if (type == "template-file") {
+                        string value = dictionary["value"].asString();
+                        string output;
+                        string path = "theme/" + this->theme + "/template/" + value;
+                        ExpandTemplate(path, DO_NOT_STRIP, dict, &output);
+                        dict->SetValue(key, output);
+                    } else if (type == "template-string") {
+                        string value = dictionary["value"].asString();
+                        string output;
+                        string cache_name = name + "_" + key;
+                        StringToTemplateCache(cache_name, value, DO_NOT_STRIP);
+                        ExpandTemplate(cache_name, DO_NOT_STRIP, dict, &output);
+                        dict->SetValue(key, output);
+                    } else if (type == "int") {
+                        int value = dictionary["value"].asInt();
+                        dict->SetIntValue(key, value);
+                    }
                 }
             }
         }
@@ -36,9 +53,9 @@ void Theme::render(std::string template_name,
     using namespace std;
     using namespace ctemplate;
     string path = "theme/" + this->theme + "/template/" + 
-                  template_name + ".tpl";
-    if (!this->config["custom_templates"].isNull()) {
-        Json::Value custom_templates = this->config["custom_templates"];
+                  template_name + ".html";
+    if (!this->config["custom-templates"].isNull()) {
+        Json::Value custom_templates = this->config["custom-templates"];
         if (!custom_templates[template_name].isNull()) {
             path = "theme/" + this->theme + "/template/" + 
                    custom_templates[template_name].asString();

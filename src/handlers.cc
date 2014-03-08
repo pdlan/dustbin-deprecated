@@ -62,6 +62,7 @@ bool PageHandler::get() {
     }
     const Json::Value* config = global.theme.get_config();
     int articles_per_page = config->get("articles-per-page", 20).asInt();
+    string time_format = (*config)["time-format"].asString();
     int limit = articles_per_page;
     int skip = articles_per_page * (page - 1);
     int articles_count = 
@@ -89,7 +90,7 @@ bool PageHandler::get() {
         string title = p.getStringField("title");
         string content = p.getStringField("content");
         time_t timestamp = p.getIntField("time");
-        string date = format_time(get_setting("time-format"), timestamp);
+        string date = format_time(time_format, timestamp);
         TemplateDictionary* article = dict.AddSectionDictionary("articles");
         article->SetValue("id", id);
         article->SetValue("title", title);
@@ -117,7 +118,9 @@ bool ArticleHandler::get() {
     string title = p.getStringField("title");
     string content = p.getStringField("content");
     time_t timestamp = p.getIntField("time");
-    string date = format_time(get_setting("time-format"), timestamp);
+    const Json::Value* config = global.theme.get_config();
+    string time_format = (*config)["time-format"].asString();
+    string date = format_time(time_format, timestamp);
     BSONForEach(e, p.getObjectField("tag")) {
         string tag = e.String();
         TemplateDictionary* tag_dict = dict.AddSectionDictionary("tags");
@@ -158,7 +161,9 @@ bool ArchivesHandler::get() {
             year_dict->SetIntValue("year", year);
             i = year;
         }
-        string date = format_time(get_setting("time-format"), timestamp);
+        const Json::Value* config = global.theme.get_config();
+        string time_format = (*config)["time-format"].asString();
+        string date = format_time(time_format, timestamp);
         TemplateDictionary* article = year_dict->AddSectionDictionary("articles");
         article->SetValue("id", id);
         article->SetValue("title", title);
@@ -181,13 +186,15 @@ bool TagHandler::get() {
     auto_ptr<DBClientCursor> cursor = 
      global.db_conn.query(global.db_name + ".article", QUERY("tag" << tag));
     int count;
+    const Json::Value* config = global.theme.get_config();
+    string time_format = (*config)["time-format"].asString();
     for (count = 0; cursor->more(); count ++) {
         BSONObj p = cursor->next();
         string id = p.getStringField("id");
         string title = p.getStringField("title");
         string content = p.getStringField("content");
         time_t timestamp = p.getIntField("time");
-        string date = format_time(get_setting("time-format"), timestamp);
+        string date = format_time(time_format, timestamp);
         TemplateDictionary* article = dict.AddSectionDictionary("articles");
         article->SetValue("id", id);
         article->SetValue("title", title);

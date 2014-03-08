@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     router.add("/page/(\\d*)(?:/|)", PageHandler::create);
     router.add("/article/(.*)(?:/|)", ArticleHandler::create);
     router.add("/tag/(.*)(?:/|)", TagHandler::create);
-    router.add("/archive(?:/|)", ArchivesHandler::create);
+    router.add("/archives(?:/|)", ArchivesHandler::create);
     router.add("/static/(.*)", StaticFileHandler::create);
     if (argc == 2) {
         config_path = argv[1];
