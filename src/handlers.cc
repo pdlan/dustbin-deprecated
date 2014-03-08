@@ -4,6 +4,7 @@
 #include <string>
 #include <recycled.h>
 #include <mongo/client/dbclient.h>
+#include <jsoncpp/json/json.h>
 #include <ctemplate/template.h> 
 #include "handlers.h"
 #include "global.h"
@@ -28,20 +29,12 @@ int DustbinHandler::get_int_setting(std::string key) {
     return p.getIntField("value");
 }
 
-void DustbinHandler::set_template_dict(ctemplate::TemplateDictionary* dict) {
-    (*dict)["site_name"] = get_setting("site-name");
-    (*dict)["site_url"] = get_setting("site-url");
-}
-
 void DustbinHandler::render(std::string template_name, 
                             ctemplate::TemplateDictionary* dict) {
     using namespace std;
     using namespace ctemplate;
-    string path = "theme/" + get_setting("theme") + "/template/" + 
-                  template_name + ".tpl";
-    
     string output;
-    ExpandTemplate(path, DO_NOT_STRIP, dict, &output);
+    global.theme.render(template_name, &output, dict);
     this->write(output);
 }
 
@@ -67,7 +60,8 @@ bool PageHandler::get() {
     if (page_str != "") {
         page = atoi(page_str.c_str());
     }
-    int articles_per_page = get_int_setting("articles-per-page");
+    const Json::Value* config = global.theme.get_config();
+    int articles_per_page = config->get("articles-per-page", 20).asInt();
     int limit = articles_per_page;
     int skip = articles_per_page * (page - 1);
     int articles_count = 
@@ -77,7 +71,6 @@ bool PageHandler::get() {
         this->on404();
     }
     TemplateDictionary dict("page");
-    set_template_dict(&dict);
     if (page < pages) {
         dict.SetIntValue("next_page", page + 1);
         dict.ShowSection("next");
@@ -104,6 +97,7 @@ bool PageHandler::get() {
         article->SetValue("date", date);
         article->ShowSection("articles");
     }
+    global.theme.set_template_dict("page", &dict);
     this->render("page", &dict);
     return true;
 }
@@ -120,7 +114,6 @@ bool ArticleHandler::get() {
         return true;
     }
     TemplateDictionary dict("article");
-    set_template_dict(&dict);
     string title = p.getStringField("title");
     string content = p.getStringField("content");
     time_t timestamp = p.getIntField("time");
@@ -131,11 +124,11 @@ bool ArticleHandler::get() {
         tag_dict->SetValue("name", tag);
         tag_dict->ShowSection("tags");
     }
-    dict.SetValue("disqus_shortname", get_setting("disqus-shortname"));
     dict.SetValue("id", id);
     dict.SetValue("title", title);
     dict.SetValue("content", content);
     dict.SetValue("date", date);
+    global.theme.set_template_dict("article", &dict);
     this->render("article", &dict);
     return true;
 }
@@ -146,7 +139,6 @@ bool ArchivesHandler::get() {
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("archives");
-    set_template_dict(&dict);
     auto_ptr<DBClientCursor> cursor = 
      global.db_conn.query(global.db_name + ".article", BSONObj());
     TemplateDictionary* year_dict;
@@ -173,6 +165,7 @@ bool ArchivesHandler::get() {
         article->SetValue("date", date);
         article->ShowSection("articles");
     }
+    global.theme.set_template_dict("archives", &dict);
     this->render("archives", &dict);
     return true;
 }
@@ -183,7 +176,6 @@ bool TagHandler::get() {
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("archives");
-    set_template_dict(&dict);
     string tag = this->get_regex_result(1);
     dict.SetValue("tag", tag);
     auto_ptr<DBClientCursor> cursor = 
@@ -204,7 +196,9 @@ bool TagHandler::get() {
     }
     if (count = 0) {
         this->on404();
-    } 
+        return true;
+    }
+    global.theme.set_template_dict("tag", &dict);
     this->render("tag", &dict);
     return true;
 }

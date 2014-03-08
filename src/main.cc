@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
         printf("Unable to initialize http server.\n");
         return 0;
     }
+    global.theme.set_theme(DustbinHandler::get_setting("theme"));
     server->start();
     return 0;
 }

@@ -8,6 +8,7 @@ add_subdirectory(recycled)
 set(MAIN_SRC_LIST
     src/main.cc
     src/handlers.cc
+    src/theme.cc
 )
 
 add_executable(dustbin ${MAIN_SRC_LIST})
