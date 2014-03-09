@@ -209,3 +209,25 @@ bool TagHandler::get() {
     this->render("tag", &dict);
     return true;
 }
+
+bool LoginHandler::get() {
+    using namespace std;
+    using namespace mongo;
+    using namespace ctemplate;
+    this->set_header("Content-Type", "text/html");
+    TemplateDictionary dict("login");
+    global.theme.set_template_dict("login", &dict);
+    this->render("login", &dict);
+    return true;
+}
+
+bool LoginHandler::post() {
+    using namespace std;
+    using namespace mongo;
+    using namespace ctemplate;
+    this->set_header("Content-Type", "text/html");
+    TemplateDictionary dict("login");
+    global.theme.set_template_dict("login", &dict);
+    this->render("login", &dict);
+    return true;
+}

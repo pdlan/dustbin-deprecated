@@ -45,4 +45,13 @@ class TagHandler : public DustbinHandler {
         return new TagHandler;
     }
 };
+
+class LoginHandler : public DustbinHandler {
+  public:
+    bool get();
+    bool post();
+    static Handler* create() {
+        return new LoginHandler;
+    }
+};
 #endif
