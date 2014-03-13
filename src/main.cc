@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
         printf("Unable to initialize http server.\n");
         return 0;
     }
+    global.theme.initialize();
     global.theme.set_theme(DustbinHandler::get_setting("theme"));
     server->start();
     return 0;
@@ -87,8 +88,5 @@ bool initialize(std::string config_path,
         return false;
     }
     global.db_name = db_name;
-    string static_path = "theme/" + DustbinHandler::get_setting("theme")
-                          + "/static/";
-    StaticFileHandler::set_path(static_path);
     return true;
 }

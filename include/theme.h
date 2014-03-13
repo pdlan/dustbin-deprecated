@@ -2,7 +2,14 @@
 #define DUSTBIN_INCLUDE_THEME_H
 #include <string>
 #include <jsoncpp/json/json.h>
-#include <ctemplate/template.h> 
+#include <ctemplate/template.h>
+
+struct ThemeInfo {
+    std::string name;
+    std::string path;
+    std::string author;
+};
+
 class Theme {
   public:
     void set_template_dict(std::string template_name,
@@ -10,10 +17,13 @@ class Theme {
     void render(std::string template_name, 
                 std::string* output, 
                 ctemplate::TemplateDictionary* dict);
-    void set_theme(std::string theme);
+    bool set_theme(std::string name);
     const Json::Value* get_config();
+    void initialize();
+    void refresh();
   private:
-    std::string theme;
+    std::vector<ThemeInfo> themes;
+    std::string theme_path;
     Json::Value config;
 };
 

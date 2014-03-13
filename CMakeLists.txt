@@ -27,4 +27,3 @@ target_link_libraries(
     jsoncpp
 )
 configure_file(conf/dustbin.conf dustbin.conf)
-file(COPY theme DESTINATION .)
