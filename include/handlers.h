@@ -4,13 +4,16 @@
 #include <recycled.h>
 #include <ctemplate/template.h> 
 #include "global.h"
+
 class DustbinHandler : public recycled::Handler {
   public:
     static std::string get_setting(std::string key);
     static int get_int_setting(std::string key);
   protected:
     static std::string format_time(std::string format, time_t timestamp);
-    void render(std::string template_name, ctemplate::TemplateDictionary* dict);
+    void render(std::string template_name, 
+                ctemplate::TemplateDictionary* dict, 
+                bool is_admin_template = false);
     void on404();
 };
 
@@ -43,15 +46,6 @@ class TagHandler : public DustbinHandler {
     bool get();
     static Handler* create() {
         return new TagHandler;
-    }
-};
-
-class LoginHandler : public DustbinHandler {
-  public:
-    bool get();
-    bool post();
-    static Handler* create() {
-        return new LoginHandler;
     }
 };
 #endif

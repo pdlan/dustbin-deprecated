@@ -6,6 +6,7 @@
 #include <jsoncpp/json/json.h>
 #include <mongo/client/dbclient.h>
 #include "handlers.h"
+#include "admin.h"
 #include "global.h"
 
 extern Global global;
@@ -22,12 +23,15 @@ int main(int argc, char** argv) {
     Server* server;
     Router router;
     router.add("/", PageHandler::create);
-    router.add("/page/(\\d*)(?:/|)", PageHandler::create);
-    router.add("/article/(.*)(?:/|)", ArticleHandler::create);
-    router.add("/tag/(.*)(?:/|)", TagHandler::create);
+    router.add("/page/(\\d*)", PageHandler::create);
+    router.add("/article/(.*)", ArticleHandler::create);
+    router.add("/tag/(.*)", TagHandler::create);
     router.add("/archives(?:/|)", ArchivesHandler::create);
-    router.add("/admin/login(?:/|)", LoginHandler::create);
+    router.add("/admin/user/login(?:/|)", AdminLoginHandler::create);
+    router.add("/admin/user/logout(?:/|)", AdminLogoutHandler::create);
+    router.add("/admin(?:/|)", AdminIndexHandler::create);
     router.add("/static/(.*)", StaticFileHandler::create);
+    router.add("/admin/static/(.*)", StaticFileHandler::create);
     if (argc == 2) {
         config_path = argv[1];
     }
@@ -39,8 +43,6 @@ int main(int argc, char** argv) {
         printf("Unable to initialize http server.\n");
         return 0;
     }
-    global.theme.initialize();
-    global.theme.set_theme(DustbinHandler::get_setting("theme"));
     server->start();
     return 0;
 }
@@ -88,5 +90,8 @@ bool initialize(std::string config_path,
         return false;
     }
     global.db_name = db_name;
+    global.auth.set_db_config(&global.db_conn, db_name);
+    global.theme.initialize();
+    global.theme.set_theme(DustbinHandler::get_setting("theme"));
     return true;
 }

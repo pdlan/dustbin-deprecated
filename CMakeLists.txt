@@ -9,6 +9,8 @@ set(MAIN_SRC_LIST
     src/main.cc
     src/handlers.cc
     src/theme.cc
+    src/admin.cc
+    src/auth.cc
 )
 
 add_executable(dustbin ${MAIN_SRC_LIST})
@@ -25,5 +27,7 @@ target_link_libraries(
     recycled
     event
     jsoncpp
+    ssl
 )
 configure_file(conf/dustbin.conf dustbin.conf)
+file(COPY admin DESTINATION .)

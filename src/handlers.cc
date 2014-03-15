@@ -30,11 +30,12 @@ int DustbinHandler::get_int_setting(std::string key) {
 }
 
 void DustbinHandler::render(std::string template_name, 
-                            ctemplate::TemplateDictionary* dict) {
+                            ctemplate::TemplateDictionary* dict, 
+                            bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
     string output;
-    global.theme.render(template_name, &output, dict);
+    global.theme.render(template_name, &output, dict, is_admin_template);
     this->write(output);
 }
 
@@ -47,7 +48,13 @@ std::string DustbinHandler::format_time(std::string format, time_t timestamp) {
 
 void DustbinHandler::on404()
 {
-    //TODO
+    using namespace ctemplate;
+    this->set_header("Content-Type", "text/html");
+    this->conn->resp->status_code = 404;
+    this->conn->resp->status_text = "Not Found";
+    TemplateDictionary dict("404");
+    global.theme.set_template_dict("404", &dict);
+    this->render("404", &dict);
 }
 
 bool PageHandler::get() {
@@ -188,7 +195,7 @@ bool TagHandler::get() {
     int count;
     const Json::Value* config = global.theme.get_config();
     string time_format = (*config)["time-format"].asString();
-    for (count = 0; cursor->more(); count ++) {
+    for (count = 0; cursor->more(); ++ count) {
         BSONObj p = cursor->next();
         string id = p.getStringField("id");
         string title = p.getStringField("title");
@@ -201,33 +208,11 @@ bool TagHandler::get() {
         article->SetValue("date", date);
         article->ShowSection("articles");
     }
-    if (count = 0) {
+    if (count == 0) {
         this->on404();
         return true;
     }
     global.theme.set_template_dict("tag", &dict);
     this->render("tag", &dict);
-    return true;
-}
-
-bool LoginHandler::get() {
-    using namespace std;
-    using namespace mongo;
-    using namespace ctemplate;
-    this->set_header("Content-Type", "text/html");
-    TemplateDictionary dict("login");
-    global.theme.set_template_dict("login", &dict);
-    this->render("login", &dict);
-    return true;
-}
-
-bool LoginHandler::post() {
-    using namespace std;
-    using namespace mongo;
-    using namespace ctemplate;
-    this->set_header("Content-Type", "text/html");
-    TemplateDictionary dict("login");
-    global.theme.set_template_dict("login", &dict);
-    this->render("login", &dict);
     return true;
 }

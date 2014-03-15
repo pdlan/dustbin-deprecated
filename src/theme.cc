@@ -7,20 +7,26 @@
 #include "handlers.h"
 
 void Theme::set_template_dict(std::string template_name,
-                              ctemplate::TemplateDictionary* dict) {
+                              ctemplate::TemplateDictionary* dict,
+                              bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
     dict->SetValue("site_name", DustbinHandler::get_setting("site-name"));
+    dict->SetValue("site_description", 
+                   DustbinHandler::get_setting("site-description"));
     dict->SetValue("site_url", DustbinHandler::get_setting("site-url"));
+    if (is_admin_template) {
+        return;
+    }
     if (!this->config["custom-dictionaries"].isNull()) {
         Json::Value custom_dictionaries = this->config["custom-dictionaries"];
-        for (int i = 0; i < custom_dictionaries.size(); i ++) {
+        for (int i = 0; i < custom_dictionaries.size(); ++ i) {
             if (custom_dictionaries[i].size() < 2) {
                 continue;
             }
             string name = custom_dictionaries[i][0].asString();
             if (name == template_name) {
-                for (int j = 0; j < custom_dictionaries[i][1].size(); j ++) {
+                for (int j = 0; j < custom_dictionaries[i][1].size(); ++ j) {
                     Json::Value dictionary = custom_dictionaries[i][1][j];
                     string type = dictionary["type"].asString();
                     string key = dictionary["key"].asString();
@@ -52,12 +58,18 @@ void Theme::set_template_dict(std::string template_name,
 
 void Theme::render(std::string template_name, 
                    std::string* output, 
-                   ctemplate::TemplateDictionary* dict) {
+                   ctemplate::TemplateDictionary* dict, 
+                   bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
-    string path = "theme/" + this->theme_path + "/template/" + 
+    string path;
+    if (is_admin_template) {
+        path = "admin/template/" + template_name + ".html";
+    } else {
+        path = "theme/" + this->theme_path + "/template/" + 
                   template_name + ".html";
-    if (!this->config["custom-templates"].isNull()) {
+    }
+    if (!is_admin_template && !this->config["custom-templates"].isNull()) {
         Json::Value custom_templates = this->config["custom-templates"];
         if (!custom_templates[template_name].isNull()) {
             path = "theme/" + this->theme_path + "/template/" + 
@@ -72,7 +84,7 @@ bool Theme::set_theme(std::string name) {
     std::string theme_path;
     bool has_found = false;
     for (vector<ThemeInfo>::iterator it = this->themes.begin(); 
-         it != this->themes.end(); it ++) {
+         it != this->themes.end(); ++ it) {
         if (name == it->name) {
             theme_path = it->path;
             has_found = true;
@@ -101,12 +113,14 @@ bool Theme::set_theme(std::string name) {
     }
     delete buffer;
     fclose(file);
-    recycled::StaticFileHandler::path = "theme/" + theme_path + "/static/";
+    this->static_paths["/static/(.*)"] = "theme/" + theme_path + "/static/";
+    this->static_paths["/admin/static/(.*)"] = "admin/static/";
     return true;
 }
 
 void Theme::initialize() {
     this->refresh();
+    recycled::StaticFileHandler::paths = &static_paths;
 }
 
 void Theme::refresh() {
@@ -122,7 +136,7 @@ void Theme::refresh() {
         lstat(file->d_name, &file_stat);
         if (S_IFDIR & file_stat.st_mode) {
             std::string theme_path = file->d_name;
-            if (theme_path.length() > 0 and theme_path[0] == '.') {
+            if (theme_path.length() > 0 && theme_path[0] == '.') {
                 continue;
             }
             string config_path = theme_path + "/theme.conf";
