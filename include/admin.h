@@ -31,4 +31,31 @@ class AdminIndexHandler : public DustbinHandler {
     }
 };
 
+class AdminThemeHandler : public DustbinHandler {
+  public:
+    bool get();
+    bool post();
+    static Handler* create() {
+        return new AdminThemeHandler;
+    }
+};
+
+class AdminArticleHandler : public DustbinHandler {
+  public:
+    bool get();
+    bool post();
+    static Handler* create() {
+        return new AdminArticleHandler;
+    }
+};
+
+class AdminSettingHandler : public DustbinHandler {
+  public:
+    bool get();
+    bool post();
+    static Handler* create() {
+        return new AdminSettingHandler;
+    }
+};
+
 #endif

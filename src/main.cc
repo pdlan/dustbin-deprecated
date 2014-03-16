@@ -23,13 +23,16 @@ int main(int argc, char** argv) {
     Server* server;
     Router router;
     router.add("/", PageHandler::create);
-    router.add("/page/(\\d*)", PageHandler::create);
-    router.add("/article/(.*)", ArticleHandler::create);
-    router.add("/tag/(.*)", TagHandler::create);
+    router.add("/page/(\\d*?)(?:/|)", PageHandler::create);
+    router.add("/article/(.*?)(?:/|)", ArticleHandler::create);
+    router.add("/tag/(.*?)(?:/|)", TagHandler::create);
     router.add("/archives(?:/|)", ArchivesHandler::create);
     router.add("/admin/user/login(?:/|)", AdminLoginHandler::create);
     router.add("/admin/user/logout(?:/|)", AdminLogoutHandler::create);
     router.add("/admin(?:/|)", AdminIndexHandler::create);
+    router.add("/admin/theme(?:/|)", AdminThemeHandler::create);
+    router.add("/admin/article/(.*?)/(.*?)(?:/|)", AdminArticleHandler::create);
+    router.add("/admin/setting(?:/|)", AdminSettingHandler::create);
     router.add("/static/(.*)", StaticFileHandler::create);
     router.add("/admin/static/(.*)", StaticFileHandler::create);
     if (argc == 2) {

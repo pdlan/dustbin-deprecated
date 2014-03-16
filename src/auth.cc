@@ -20,26 +20,28 @@ int Auth::login(recycled::Connection* conn) {
     string username = conn->req->get_post_argument("username");
     string password = conn->req->get_post_argument("password");
     string pw_encoded = Auth::SHA256(password);
+    string ip = conn->req->get_ip();
     BSONObj p = this->db_conn->findOne(this->db_name + ".user", 
                 QUERY("username" << username << "password" << pw_encoded));
     this->db_conn->remove(this->db_name + ".session", 
-                          QUERY("username" << username));
+                          QUERY("username" << username << "ip" << ip));
     if (p.isEmpty()) {
         return Auth::failed;
     }
     srand((int)time(0));
-    ostringstream serial;
-    serial << username << rand();
-    string serial_encoded = Auth::SHA256(serial.str());
+    ostringstream sessionid;
+    sessionid << username << rand();
+    string sessionid_encoded = Auth::SHA256(sessionid.str());
     ostringstream token;
     token << username << rand();
     string token_encoded = Auth::SHA256(token.str());
     this->db_conn->insert(this->db_name + ".session", 
                           BSON("username" << username 
                                << "token" << token_encoded
-                               << "serial" << serial_encoded));
+                               << "sessionid" << sessionid_encoded
+                               << "ip" << ip));
     conn->resp->set_cookie("username", username, "", "/admin");
-    conn->resp->set_cookie("serial", serial_encoded, "", "/admin");
+    conn->resp->set_cookie("sessionid", sessionid_encoded, "", "/admin");
     conn->resp->set_cookie("token", token_encoded, "", "/admin");
     return Auth::success;
 }
@@ -51,8 +53,9 @@ int Auth::logout(recycled::Connection* conn) {
         return Auth::failed;
     }
     string username = conn->req->get_cookie("username");
+    string ip = conn->req->get_ip();
     this->db_conn->remove(this->db_name + ".session", 
-                          QUERY("username" << username));
+                          QUERY("username" << username << "ip" << ip));
     return Auth::success;
 }
 
@@ -61,11 +64,13 @@ int Auth::auth(recycled::Connection* conn) {
     using namespace mongo;
     string username = conn->req->get_cookie("username");
     string token_cookie = conn->req->get_cookie("token");
-    string serial_cookie = conn->req->get_cookie("serial");
+    string sessionid_cookie = conn->req->get_cookie("sessionid");
+    string ip = conn->req->get_ip();
     BSONObj p = this->db_conn->findOne(this->db_name + ".session", 
                 QUERY("username" << username 
                       << "token" << token_cookie
-                      << "serial" << serial_cookie));
+                      << "sessionid" << sessionid_cookie
+                      << "ip" << ip));
     if (p.isEmpty()) {
         return Auth::failed;
     }
@@ -74,10 +79,11 @@ int Auth::auth(recycled::Connection* conn) {
     new_token << username << rand();
     string token_encoded = Auth::SHA256(new_token.str());
     this->db_conn->update(this->db_name + ".session", 
-                          QUERY("username" << username), 
+                          QUERY("username" << username << "ip" << ip), 
                           BSON("username" << username 
                                << "token" << token_encoded
-                               << "serial" << serial_cookie));
+                               << "sessionid" << sessionid_cookie
+                               << "ip" << ip));
     conn->resp->set_cookie("token", token_encoded, "", "/admin");
     return Auth::success;
 }

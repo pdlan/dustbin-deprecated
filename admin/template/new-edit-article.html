@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    {{#edit}}
+    <title>Edit - {{site_name}}</title>
+    {{/edit}}
+    {{#new}}
+    <title>New - {{site_name}}</title>
+    {{/new}}
+  </head>
+  <body>
+    <div>
+    {{#edit}}
+    <form action="/admin/article/edit/{{id}}/" method="post">
+    {{/edit}}
+    {{#new}}
+    <form action="/admin/article/new/" method="post">
+    {{/new}}
+        <div>
+          <label for="title">Title:</label>
+          <input type="text" id="title" name="title" {{#edit}}value="{{title}}"{{/edit}}/>
+        </div>
+        <div>
+          <label for="tags">Tags:</label>
+          <input type="text" id="tags" name="tags" {{#edit}}value="{{tags}}"{{/edit}}/>
+        </div>
+        <div>
+          <textarea id="content" name="content" cols="100" rows="20">{{#edit}}{{content}}{{/edit}}</textarea>
+        </div>
+        <div>
+          <button type="submit">
+          {{#edit}}
+          Edit
+          {{/edit}}
+          {{#new}}
+          Post
+          {{/new}}
+          </button>
+        </div>
+      </form>
+    <div>
+  </body>
+</html>

@@ -22,7 +22,8 @@ std::string DustbinHandler::get_setting(std::string key) {
 
 int DustbinHandler::get_int_setting(std::string key) {
     using namespace mongo;
-    BSONObj p = global.db_conn.findOne(global.db_name + ".setting", QUERY("key" << key));
+    BSONObj p = global.db_conn.findOne(global.db_name + ".setting", 
+                                       QUERY("key" << key));
     if (!p.hasField("value")) {
         return 0;
     }
@@ -77,6 +78,7 @@ bool PageHandler::get() {
     int pages = ceil(double(articles_count) / articles_per_page);
     if (page > pages) {
         this->on404();
+        return true;
     }
     TemplateDictionary dict("page");
     if (page < pages) {
@@ -89,8 +91,10 @@ bool PageHandler::get() {
     }
     dict.SetIntValue("current_page", page);
     dict.SetIntValue("pages", pages);
+    Query qu = Query();
     auto_ptr<DBClientCursor> cursor = 
-     global.db_conn.query(global.db_name + ".article", BSONObj(), limit, skip);
+     global.db_conn.query(global.db_name + ".article", 
+                          qu.sort("time", -1), limit, skip);
     while (cursor->more()) {
         BSONObj p = cursor->next();
         string id = p.getStringField("id");
@@ -116,7 +120,8 @@ bool ArticleHandler::get() {
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
     string id = this->get_regex_result(1);
-    BSONObj p = global.db_conn.findOne(global.db_name + ".article", QUERY("id" << id));
+    BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
+                                       QUERY("id" << id));
     if (p.isEmpty()) {
         this->on404();
         return true;
@@ -149,14 +154,14 @@ bool ArchivesHandler::get() {
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("archives");
+    Query qu = Query();
     auto_ptr<DBClientCursor> cursor = 
-     global.db_conn.query(global.db_name + ".article", BSONObj());
+     global.db_conn.query(global.db_name + ".article", qu.sort("time", -1));
     TemplateDictionary* year_dict;
     for (int i = 0; cursor->more();) {
         BSONObj p = cursor->next();
         string id = p.getStringField("id");
         string title = p.getStringField("title");
-        string content = p.getStringField("content");
         time_t timestamp = p.getIntField("time");
         tm* timeinfo = localtime(&timestamp);
         int year = timeinfo->tm_year + 1900;
@@ -170,7 +175,7 @@ bool ArchivesHandler::get() {
         }
         const Json::Value* config = global.theme.get_config();
         string time_format = (*config)["time-format"].asString();
-        string date = format_time(time_format, timestamp);
+        string date = DustbinHandler::format_time(time_format, timestamp);
         TemplateDictionary* article = year_dict->AddSectionDictionary("articles");
         article->SetValue("id", id);
         article->SetValue("title", title);

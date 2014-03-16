@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Theme - {{site_name}}</title>
+  </head>
+  <body>
+    <div>
+      <form action="/admin/theme/" method="post">
+        <input type="hidden" id="action" name="action" value="enable" />
+        <div>
+          <label for="theme">Theme:</label>
+          <input type="text" id="theme" name="theme" />
+        </div>
+        <div>
+          <button type="submit">Enable</button>
+        </div>
+      </form>
+    <div>
+  </body>
+</html>
