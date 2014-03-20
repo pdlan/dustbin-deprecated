@@ -10,6 +10,7 @@
 #include "admin.h"
 #include "handlers.h"
 #include "auth.h"
+#include "theme.h"
 #include "global.h"
 
 extern Global global;
@@ -84,6 +85,15 @@ bool AdminThemeHandler::get() {
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("theme");
     global.theme.set_template_dict("theme", &dict, true);
+    const vector<ThemeInfo>* themes = global.theme.get_themes_info();
+    for (vector<ThemeInfo>::const_iterator it = themes->begin();
+         it != themes->end(); ++ it) {
+        ThemeInfo info = *it;
+        TemplateDictionary* themes = dict.AddSectionDictionary("themes");
+        themes->SetValue("name", info.name);
+        themes->SetValue("author", info.author);
+        dict.ShowSection("themes");
+    }
     this->render("theme", &dict, true);
     return true;
 }
@@ -177,6 +187,16 @@ bool AdminArticleHandler::get() {
         dict.SetValue("tags", tags);
         dict.ShowSection("edit");
         this->render("new-edit-article", &dict, true);
+    } else if (action == "delete") {
+        string id = this->get_regex_result(2);
+        BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
+                                           QUERY("id" << id));
+        if (p.isEmpty()) {
+            this->on404();
+            return true;
+        }
+        global.db_conn.remove(global.db_name + ".article", QUERY("id" << id));
+        this->redirect("/admin/article/list/");
     }
     return true;
 }

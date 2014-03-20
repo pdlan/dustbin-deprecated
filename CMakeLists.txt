@@ -11,6 +11,7 @@ set(MAIN_SRC_LIST
     src/theme.cc
     src/admin.cc
     src/auth.cc
+    src/modifiers.cc
 )
 
 add_executable(dustbin ${MAIN_SRC_LIST})

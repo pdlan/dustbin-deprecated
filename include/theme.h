@@ -4,12 +4,14 @@
 #include <map>
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
+#include "modifiers.h"
 
 struct ThemeInfo {
     std::string name;
     std::string path;
     std::string author;
 };
+
 
 class Theme {
   public:
@@ -22,6 +24,7 @@ class Theme {
                 bool is_admin_template);
     bool set_theme(std::string name);
     const Json::Value* get_config();
+    const std::vector<ThemeInfo>* get_themes_info();
     void initialize();
     void refresh();
   private:
@@ -29,9 +32,20 @@ class Theme {
     std::map<std::string, std::string> static_paths;
     std::string theme_path;
     Json::Value config;
+    Json::Value language;
+    static bool load_json_file(std::string path, Json::Value* root);
+    FormatTimeModifier format_time_modifier;
+    LoadSubTemplateModifier load_sub_template_modifier;
+    GetConfigModifier get_config_modifier;
+    GetLanguageModifier get_language_modifier;
 };
 
 inline const Json::Value* Theme::get_config() {
     return &this->config;
 }
+
+inline const std::vector<ThemeInfo>* Theme::get_themes_info() {
+    return &this->themes;
+}
+#undef MODIFY_SIGNATURE_
 #endif

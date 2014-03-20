@@ -18,43 +18,7 @@ void Theme::set_template_dict(std::string template_name,
     if (is_admin_template) {
         return;
     }
-    if (!this->config["custom-dictionaries"].isNull()) {
-        Json::Value custom_dictionaries = this->config["custom-dictionaries"];
-        for (int i = 0; i < custom_dictionaries.size(); ++ i) {
-            if (custom_dictionaries[i].size() < 2) {
-                continue;
-            }
-            string name = custom_dictionaries[i][0].asString();
-            if (name == template_name) {
-                for (int j = 0; j < custom_dictionaries[i][1].size(); ++ j) {
-                    Json::Value dictionary = custom_dictionaries[i][1][j];
-                    string type = dictionary["type"].asString();
-                    string key = dictionary["key"].asString();
-                    if (type == "string") {
-                        string value = dictionary["value"].asString();
-                        dict->SetValue(key, value);
-                    } else if (type == "template-file") {
-                        string value = dictionary["value"].asString();
-                        string output;
-                        string path = "theme/" + this->theme_path + "/template/" + value;
-                        ExpandTemplate(path, DO_NOT_STRIP, dict, &output);
-                        dict->SetValue(key, output);
-                    } else if (type == "template-string") {
-                        string value = dictionary["value"].asString();
-                        string output;
-                        string cache_name = name + "_" + key;
-                        StringToTemplateCache(cache_name, value, DO_NOT_STRIP);
-                        ExpandTemplate(cache_name, DO_NOT_STRIP, dict, &output);
-                        dict->SetValue(key, output);
-                    } else if (type == "int") {
-                        int value = dictionary["value"].asInt();
-                        dict->SetIntValue(key, value);
-                    }
-                }
-            }
-        }
-    }
-}
+}    
 
 void Theme::render(std::string template_name, 
                    std::string* output, 
@@ -62,25 +26,30 @@ void Theme::render(std::string template_name,
                    bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
+    TemplateDictionary* layout_dict = dict->MakeCopy("layout");
     string path;
     if (is_admin_template) {
         path = "admin/template/" + template_name + ".html";
     } else {
-        path = "theme/" + this->theme_path + "/template/" + 
-                  template_name + ".html";
+        path = "theme/" + this->theme_path + "/template/layout.html";
     }
-    if (!is_admin_template && !this->config["custom-templates"].isNull()) {
-        Json::Value custom_templates = this->config["custom-templates"];
-        if (!custom_templates[template_name].isNull()) {
-            path = "theme/" + this->theme_path + "/template/" + 
-                   custom_templates[template_name].asString();
-        }
+    if (!is_admin_template) {
+        string sub_temp_path = "theme/" + this->theme_path + "/template/" + 
+                               template_name + ".html";
+        string buffer;
+        string title;
+        string cache_name = template_name + "_title";
+        ExpandTemplate(cache_name, DO_NOT_STRIP, dict, &title);
+        ExpandTemplate(sub_temp_path, DO_NOT_STRIP, dict, &buffer);
+        layout_dict->SetValue("block_title", title);
+        layout_dict->SetValue("block_content", buffer);
     }
-    ExpandTemplate(path, DO_NOT_STRIP, dict, output);
+    ExpandTemplate(path, DO_NOT_STRIP, layout_dict, output);
 }
 
 bool Theme::set_theme(std::string name) {
     using namespace std;
+    using namespace ctemplate;
     std::string theme_path;
     bool has_found = false;
     for (vector<ThemeInfo>::iterator it = this->themes.begin(); 
@@ -96,25 +65,43 @@ bool Theme::set_theme(std::string name) {
     }
     this->theme_path = theme_path;
     string config_path = "theme/" + theme_path + "/theme.conf";
-    FILE* file = fopen(config_path.c_str(), "r");
-    if (!file) {
+    if (!Theme::load_json_file(config_path, &this->config)) {
         return false;
     }
-    fseek(file, 0, SEEK_END);
-    size_t length = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    char* buffer = new char[length];
-    fread(buffer, length, sizeof(char), file);
-    Json::Reader reader;
-    if (!reader.parse(buffer, this->config)) {
-        delete buffer;
-        fclose(file);
+    string language = this->config["language"].asString();
+    string language_path = "theme/" + theme_path + 
+                           "/language/" + language + ".lang";
+    if (!Theme::load_json_file(language_path, &this->language)) {
         return false;
     }
-    delete buffer;
-    fclose(file);
+    if (this->language["titles"].isNull()) {
+        return false;
+    }
+    Json::Value titles = this->language["titles"];
+    Json::Value::Members member = titles.getMemberNames();
+    for (Json::Value::Members::iterator it = member.begin();
+         it != member.end(); ++ it) {
+        string template_name = *it;
+        string title = titles[template_name].asString();
+        string cache_name = template_name + "_title";
+        StringToTemplateCache(cache_name, title, DO_NOT_STRIP);
+    }
     this->static_paths["/static/(.*)"] = "theme/" + theme_path + "/static/";
     this->static_paths["/admin/static/(.*)"] = "admin/static/";
+    this->get_config_modifier.set_config(&this->config);
+    this->get_language_modifier.set_language(&this->language);
+    if (!AddModifier("x-format-time=", &this->format_time_modifier)) {
+        fprintf(stderr, "Unable to add modifier x-format-time.\n");
+    }
+    if (!AddModifier("x-load-sub-template=", &this->load_sub_template_modifier)) {
+        fprintf(stderr, "Unable to add modifier x-sub-template.\n");
+    }
+    if (!AddModifier("x-get-config=", &this->get_config_modifier)) {
+        fprintf(stderr, "Unable to add modifier x-get-config.\n");
+    }
+    if (!AddModifier("x-get-language=", &this->get_language_modifier)) {
+        fprintf(stderr, "Unable to add modifier x-get-language.\n");
+    }
     return true;
 }
 
@@ -168,4 +155,25 @@ void Theme::refresh() {
         }
     }
     chdir("..");
+}
+
+bool Theme::load_json_file(std::string path, Json::Value* root) {
+    FILE* file = fopen(path.c_str(), "r");
+    if (!file) {
+        return false;
+    }
+    fseek(file, 0, SEEK_END);
+    size_t length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char* buffer = new char[length];
+    fread(buffer, length, sizeof(char), file);
+    Json::Reader reader;
+    if (!reader.parse(buffer, *root)) {
+        delete buffer;
+        fclose(file);
+        return false;
+    }
+    delete buffer;
+    fclose(file);
+    return true;
 }

@@ -6,16 +6,18 @@
   </head>
   <body>
     <div>
-      <form action="/admin/theme/" method="post">
-        <input type="hidden" id="action" name="action" value="enable" />
-        <div>
-          <label for="theme">Theme:</label>
-          <input type="text" id="theme" name="theme" />
-        </div>
-        <div>
-          <button type="submit">Enable</button>
-        </div>
-      </form>
+      <ul>
+        {{#themes}}
+        <li>
+        <span>{{name}}</span> by <span>{{author}}</span>
+        <form action="/admin/theme/" method="post">
+          <input type="hidden" id="theme" name="theme" value="{{name}}" />
+          <input type="hidden" id="action" name="action" value="enable" />
+          <button>Enable</button>
+        </form>
+        </li>
+        {{/themes}}
+      <ul>
     <div>
   </body>
 </html>
