@@ -12,6 +12,8 @@ set(MAIN_SRC_LIST
     src/admin.cc
     src/auth.cc
     src/modifiers.cc
+    src/global.cc
+    src/install.cc
 )
 
 add_executable(dustbin ${MAIN_SRC_LIST})
@@ -30,5 +32,7 @@ target_link_libraries(
     jsoncpp
     ssl
 )
+
 configure_file(conf/dustbin.conf dustbin.conf)
 file(COPY admin DESTINATION .)
+file(COPY comment DESTINATION .)

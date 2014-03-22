@@ -7,4 +7,10 @@ struct PluginInfo {
     std::string author;
     std::string version;
 };
+
+class PluginManager {
+  public:
+    bool load_plugins();
+    ~PluginManager();
+};
 #endif

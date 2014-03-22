@@ -6,11 +6,7 @@
 #include "global.h"
 
 class DustbinHandler : public recycled::Handler {
-  public:
-    static std::string get_setting(std::string key);
-    static int get_int_setting(std::string key);
   protected:
-    static std::string format_time(std::string format, time_t timestamp);
     void render(std::string template_name, 
                 ctemplate::TemplateDictionary* dict, 
                 bool is_admin_template = false);
@@ -31,6 +27,8 @@ class ArticleHandler : public DustbinHandler {
     static Handler* create() {
         return new ArticleHandler;
     }
+  private:
+    std::string load_comment();
 };
 
 class ArchivesHandler : public DustbinHandler {

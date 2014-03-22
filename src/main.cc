@@ -8,6 +8,7 @@
 #include "handlers.h"
 #include "admin.h"
 #include "global.h"
+#include "install.h"
 
 extern Global global;
 Global global;
@@ -35,11 +36,12 @@ int main(int argc, char** argv) {
     router.add("/admin/setting(?:/|)", AdminSettingHandler::create);
     router.add("/static/(.*)", StaticFileHandler::create);
     router.add("/admin/static/(.*)", StaticFileHandler::create);
-    if (argc == 2) {
-        config_path = argv[1];
-    }
     if (!initialize(config_path, &server, &router)) {
         printf("Unable to load config file.\n");
+        return 0;
+    }
+    if (argc == 2 && string(argv[1]) == "install") {
+        Install::install();
         return 0;
     }
     if (!server->initialize()) {
@@ -80,7 +82,6 @@ bool initialize(std::string config_path,
             return false;
         }
         (*server) = new DirectServer("0.0.0.0", port, router);
-        printf("Dustbin has started.\nPort: %d\n", port);
     } else if (deploy_type == "fastcgi") {
         (*server) = new FCGIServer(router);
     }
@@ -95,6 +96,6 @@ bool initialize(std::string config_path,
     global.db_name = db_name;
     global.auth.set_db_config(&global.db_conn, db_name);
     global.theme.initialize();
-    global.theme.set_theme(DustbinHandler::get_setting("theme"));
+    global.theme.set_theme(global.get_setting("theme"));
     return true;
 }

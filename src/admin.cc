@@ -151,7 +151,10 @@ bool AdminArticleHandler::get() {
             string title = p.getStringField("title");
             time_t timestamp = p.getIntField("time");
             string time_format = "%b %d, %Y";
-            string date = DustbinHandler::format_time(time_format, timestamp);
+            char buffer[256];
+            tm* timeinfo = localtime(&timestamp);
+            strftime(buffer, 256, time_format.c_str(), timeinfo);
+            string date = buffer;
             TemplateDictionary* article = dict.AddSectionDictionary("articles");
             article->SetValue("id", id);
             article->SetValue("title", title);

@@ -12,10 +12,10 @@ class Auth {
     int login(recycled::Connection* conn);
     int logout(recycled::Connection* conn);
     int auth(recycled::Connection* conn);
+    static std::string SHA256(std::string str);
   private:
     mongo::DBClientConnection* db_conn;
     std::string db_name;
-    static std::string SHA256(std::string str);
 };
 
 #endif

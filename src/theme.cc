@@ -6,15 +6,16 @@
 #include "theme.h"
 #include "handlers.h"
 
+extern Global global;
+
 void Theme::set_template_dict(std::string template_name,
                               ctemplate::TemplateDictionary* dict,
                               bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
-    dict->SetValue("site_name", DustbinHandler::get_setting("site-name"));
-    dict->SetValue("site_description", 
-                   DustbinHandler::get_setting("site-description"));
-    dict->SetValue("site_url", DustbinHandler::get_setting("site-url"));
+    dict->SetValue("site_name", global.get_setting("site-name"));
+    dict->SetValue("site_description", global.get_setting("site-description"));
+    dict->SetValue("site_url", global.get_setting("site-url"));
     if (is_admin_template) {
         return;
     }
@@ -96,7 +97,7 @@ bool Theme::set_theme(std::string name) {
     this->set_language_templates();
     this->static_paths["/static/(.*)"] = "theme/" + theme_path + "/static/";
     this->static_paths["/admin/static/(.*)"] = "admin/static/";
-    this->get_path_modifier.set_url(DustbinHandler::get_setting("site-url"));
+    this->get_path_modifier.set_url(global.get_setting("site-url"));
     this->format_time_modifier.set_language(&this->language);
     if (!AddModifier("x-format-time=", &this->format_time_modifier)) {
         fprintf(stderr, "Unable to add modifier x-format-time.\n");

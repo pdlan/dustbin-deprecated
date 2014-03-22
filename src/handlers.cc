@@ -11,25 +11,6 @@
 
 extern Global global;
 
-std::string DustbinHandler::get_setting(std::string key) {
-    using namespace mongo;
-    BSONObj p = global.db_conn.findOne(global.db_name + ".setting", QUERY("key" << key));
-    if (!p.hasField("value")) {
-        return "";
-    }
-    return p.getStringField("value");
-}
-
-int DustbinHandler::get_int_setting(std::string key) {
-    using namespace mongo;
-    BSONObj p = global.db_conn.findOne(global.db_name + ".setting", 
-                                       QUERY("key" << key));
-    if (!p.hasField("value")) {
-        return 0;
-    }
-    return p.getIntField("value");
-}
-
 void DustbinHandler::render(std::string template_name, 
                             ctemplate::TemplateDictionary* dict, 
                             bool is_admin_template) {
@@ -38,13 +19,6 @@ void DustbinHandler::render(std::string template_name,
     string output;
     global.theme.render(template_name, &output, dict, is_admin_template);
     this->write(output);
-}
-
-std::string DustbinHandler::format_time(std::string format, time_t timestamp) {
-    tm* timeinfo = localtime(&timestamp);
-    char buffer[256];
-    strftime(buffer, 256, format.c_str(), timeinfo);
-    return buffer;
 }
 
 void DustbinHandler::on404()
@@ -134,9 +108,13 @@ bool ArticleHandler::get() {
     BSONForEach(e, p.getObjectField("tag")) {
         string tag = e.String();
         TemplateDictionary* tag_dict = dict.AddSectionDictionary("tags");
+        if (tag == "") {
+            continue;
+        }
         tag_dict->SetValue("name", tag);
         tag_dict->ShowSection("tags");
     }
+    string comment = this->load_comment();
     if (id == "" || title == "" || content == "") {
         this->on404();
         return true;
@@ -144,10 +122,33 @@ bool ArticleHandler::get() {
     dict.SetValue("id", id);
     dict.SetValue("title", title);
     dict.SetValue("content", content);
+    if (comment != "") {
+        dict.SetValue("comment", comment);
+    }
     dict.SetIntValue("date", timestamp);
     global.theme.set_template_dict("article", &dict);
     this->render("article", &dict);
     return true;
+}
+
+std::string ArticleHandler::load_comment() {
+    using namespace std;
+    string type = global.get_setting("commenting-system");
+    string path = "comment/" + type + ".html";
+    FILE* file = fopen(path.c_str(), "r");
+    if (!file) {
+        return "";
+    }
+    fseek(file, 0, SEEK_END);
+    size_t length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char* buffer = new char[length + 1];
+    fread(buffer, length, sizeof(char), file);
+    buffer[length] = '\0';
+    string comment = buffer;
+    delete buffer;
+    fclose(file);
+    return comment;
 }
 
 bool ArchivesHandler::get() {
