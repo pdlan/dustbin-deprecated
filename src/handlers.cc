@@ -89,7 +89,7 @@ bool PageHandler::get() {
         dict.ShowSection("prev");
     }
     dict.SetIntValue("current_page", page);
-    dict.SetIntValue("pages", pages);
+    dict.SetIntValue("number_of_pages", pages);
     Query qu = Query();
     auto_ptr<DBClientCursor> cursor = 
      global.db_conn.query(global.db_name + ".article", 
@@ -100,6 +100,9 @@ bool PageHandler::get() {
         string title = p.getStringField("title");
         string content = p.getStringField("content");
         time_t timestamp = p.getIntField("time");
+        if (id == "" || title == "" || content == "") {
+            continue;
+        }
         TemplateDictionary* article = dict.AddSectionDictionary("articles");
         article->SetValue("id", id);
         article->SetValue("title", title);
@@ -134,10 +137,13 @@ bool ArticleHandler::get() {
         tag_dict->SetValue("name", tag);
         tag_dict->ShowSection("tags");
     }
+    if (id == "" || title == "" || content == "") {
+        this->on404();
+        return true;
+    }
     dict.SetValue("id", id);
     dict.SetValue("title", title);
     dict.SetValue("content", content);
-    //dict.SetValue("date", date);
     dict.SetIntValue("date", timestamp);
     global.theme.set_template_dict("article", &dict);
     this->render("article", &dict);
@@ -169,6 +175,9 @@ bool ArchivesHandler::get() {
             year_dict->SetIntValue("year", year);
             i = year;
         }
+        if (id == "" || title == "") {
+            continue;
+        }
         TemplateDictionary* article = year_dict->AddSectionDictionary("articles");
         article->SetValue("id", id);
         article->SetValue("title", title);
@@ -197,6 +206,9 @@ bool TagHandler::get() {
         string title = p.getStringField("title");
         string content = p.getStringField("content");
         time_t timestamp = p.getIntField("time");
+        if (id == "" || title == "" || content == "") {
+            continue;
+        }
         TemplateDictionary* article = dict.AddSectionDictionary("articles");
         article->SetValue("id", id);
         article->SetValue("title", title);

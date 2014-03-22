@@ -1,3 +1,5 @@
+#ifndef DUSTBIN_INCLUDE_MODIFIERS_H
+#define DUSTBIN_INCLUDE_MODIFIERS_H
 #include <string>
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
@@ -12,25 +14,16 @@
 class FormatTimeModifier : public ctemplate::TemplateModifier {
   public:
     MODIFY_SIGNATURE_;
-};
-
-class LoadSubTemplateModifier : public ctemplate::TemplateModifier {
-  public:
-    MODIFY_SIGNATURE_;
-};
-
-class GetConfigModifier : public ctemplate::TemplateModifier {
-  public:
-    MODIFY_SIGNATURE_;
-    void set_config(Json::Value* config);
-  private:
-    Json::Value* config;
-};
-
-class GetLanguageModifier : public ctemplate::TemplateModifier {
-  public:
-    MODIFY_SIGNATURE_;
     void set_language(Json::Value* language);
   private:
     Json::Value* language;
 };
+
+class GetPathModifier : public ctemplate::TemplateModifier {
+  public:
+    MODIFY_SIGNATURE_;
+    void set_url(std::string url);
+  private:
+    std::string url;
+};
+#endif

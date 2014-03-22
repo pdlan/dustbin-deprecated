@@ -18,6 +18,24 @@ void Theme::set_template_dict(std::string template_name,
     if (is_admin_template) {
         return;
     }
+    Json::Value::Members language_members = this->language.getMemberNames();
+    for (Json::Value::Members::iterator it = language_members.begin();
+         it != language_members.end(); ++ it) {
+        string key = *it;
+        if (this->language[key].isString()) {
+            string value = this->language[key].asString();
+            string cache_name = "language_" + key;
+            if (key == "") {
+                continue;
+            }
+            string buffer;
+            ExpandTemplate(cache_name, DO_NOT_STRIP, dict, &buffer);
+            if (buffer == "") {
+                continue;
+            }
+            dict->SetValue(cache_name, buffer);
+        }
+    }
 }    
 
 void Theme::render(std::string template_name, 
@@ -74,33 +92,17 @@ bool Theme::set_theme(std::string name) {
     if (!Theme::load_json_file(language_path, &this->language)) {
         return false;
     }
-    if (this->language["titles"].isNull()) {
-        return false;
-    }
-    Json::Value titles = this->language["titles"];
-    Json::Value::Members member = titles.getMemberNames();
-    for (Json::Value::Members::iterator it = member.begin();
-         it != member.end(); ++ it) {
-        string template_name = *it;
-        string title = titles[template_name].asString();
-        string cache_name = template_name + "_title";
-        StringToTemplateCache(cache_name, title, DO_NOT_STRIP);
-    }
+    this->set_title_templates();
+    this->set_language_templates();
     this->static_paths["/static/(.*)"] = "theme/" + theme_path + "/static/";
     this->static_paths["/admin/static/(.*)"] = "admin/static/";
-    this->get_config_modifier.set_config(&this->config);
-    this->get_language_modifier.set_language(&this->language);
+    this->get_path_modifier.set_url(DustbinHandler::get_setting("site-url"));
+    this->format_time_modifier.set_language(&this->language);
     if (!AddModifier("x-format-time=", &this->format_time_modifier)) {
         fprintf(stderr, "Unable to add modifier x-format-time.\n");
     }
-    if (!AddModifier("x-load-sub-template=", &this->load_sub_template_modifier)) {
-        fprintf(stderr, "Unable to add modifier x-sub-template.\n");
-    }
-    if (!AddModifier("x-get-config=", &this->get_config_modifier)) {
-        fprintf(stderr, "Unable to add modifier x-get-config.\n");
-    }
-    if (!AddModifier("x-get-language=", &this->get_language_modifier)) {
-        fprintf(stderr, "Unable to add modifier x-get-language.\n");
+    if (!AddModifier("x-get-path=", &this->get_path_modifier)) {
+        fprintf(stderr, "Unable to add modifier x-get-path.\n");
     }
     return true;
 }
@@ -176,4 +178,41 @@ bool Theme::load_json_file(std::string path, Json::Value* root) {
     delete buffer;
     fclose(file);
     return true;
+}
+
+void Theme::set_title_templates() {
+    using namespace std;
+    using namespace ctemplate;
+    if (this->language["titles"].isNull()) {
+        return;
+    }
+    Json::Value titles = this->language["titles"];
+    Json::Value::Members members = titles.getMemberNames();
+    for (Json::Value::Members::iterator it = members.begin();
+         it != members.end(); ++ it) {
+        string template_name = *it;
+        if (titles[template_name].isString()) {
+            string title = titles[template_name].asString();
+            string cache_name = template_name + "_title";
+            StringToTemplateCache(cache_name, title, DO_NOT_STRIP);
+        }
+    }
+}
+
+void Theme::set_language_templates() {
+    using namespace std;
+    using namespace ctemplate;
+    Json::Value::Members members = this->language.getMemberNames();
+    for (Json::Value::Members::iterator it = members.begin();
+         it != members.end(); ++ it) {
+        string key = *it;
+        if (this->language[key].isString()) {
+            string value = this->language[key].asString();
+            string cache_name = "language_" + key;
+            if (value == "") {
+                continue;
+            }
+            StringToTemplateCache(cache_name, value, DO_NOT_STRIP);
+        }
+    }
 }

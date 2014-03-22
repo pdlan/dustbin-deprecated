@@ -34,10 +34,10 @@ class Theme {
     Json::Value config;
     Json::Value language;
     static bool load_json_file(std::string path, Json::Value* root);
+    void set_title_templates();
+    void set_language_templates();
     FormatTimeModifier format_time_modifier;
-    LoadSubTemplateModifier load_sub_template_modifier;
-    GetConfigModifier get_config_modifier;
-    GetLanguageModifier get_language_modifier;
+    GetPathModifier get_path_modifier;
 };
 
 inline const Json::Value* Theme::get_config() {
