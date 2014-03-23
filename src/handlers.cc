@@ -5,14 +5,14 @@
 #include <recycled.h>
 #include <mongo/client/dbclient.h>
 #include <jsoncpp/json/json.h>
-#include <ctemplate/template.h> 
+#include <ctemplate/template.h>
 #include "handlers.h"
 #include "global.h"
 
 extern Global global;
 
-void DustbinHandler::render(std::string template_name, 
-                            ctemplate::TemplateDictionary* dict, 
+void DustbinHandler::render(std::string template_name,
+                            ctemplate::TemplateDictionary* dict,
                             bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
@@ -46,7 +46,7 @@ bool PageHandler::get() {
     int articles_per_page = config->get("articles-per-page", 20).asInt();
     int limit = articles_per_page;
     int skip = articles_per_page * (page - 1);
-    int articles_count = 
+    int articles_count =
      global.db_conn.count(global.db_name + ".article", BSONObj());
     int pages = ceil(double(articles_count) / articles_per_page);
     if (page > pages) {
@@ -65,8 +65,8 @@ bool PageHandler::get() {
     dict.SetIntValue("current_page", page);
     dict.SetIntValue("number_of_pages", pages);
     Query qu = Query();
-    auto_ptr<DBClientCursor> cursor = 
-     global.db_conn.query(global.db_name + ".article", 
+    auto_ptr<DBClientCursor> cursor =
+     global.db_conn.query(global.db_name + ".article",
                           qu.sort("time", -1), limit, skip);
     while (cursor->more()) {
         BSONObj p = cursor->next();
@@ -95,7 +95,7 @@ bool ArticleHandler::get() {
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
     string id = this->get_regex_result(1);
-    BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
+    BSONObj p = global.db_conn.findOne(global.db_name + ".article",
                                        QUERY("id" << id));
     if (p.isEmpty()) {
         this->on404();
@@ -158,7 +158,7 @@ bool ArchivesHandler::get() {
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("archives");
     Query qu = Query();
-    auto_ptr<DBClientCursor> cursor = 
+    auto_ptr<DBClientCursor> cursor =
      global.db_conn.query(global.db_name + ".article", qu.sort("time", -1));
     TemplateDictionary* year_dict;
     for (int i = 0; cursor->more();) {
@@ -198,7 +198,7 @@ bool TagHandler::get() {
     TemplateDictionary dict("archives");
     string tag = this->get_regex_result(1);
     dict.SetValue("tag", tag);
-    auto_ptr<DBClientCursor> cursor = 
+    auto_ptr<DBClientCursor> cursor =
      global.db_conn.query(global.db_name + ".article", QUERY("tag" << tag));
     int count;
     for (count = 0; cursor->more(); ++ count) {

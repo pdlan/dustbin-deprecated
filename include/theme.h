@@ -38,6 +38,7 @@ class Theme {
     void set_language_templates();
     FormatTimeModifier format_time_modifier;
     GetPathModifier get_path_modifier;
+    GetStaticFileModifier get_static_file_modifier;
 };
 
 inline const Json::Value* Theme::get_config() {

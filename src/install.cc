@@ -35,6 +35,7 @@ void Install::install() {
     global.set_setting("site-name", site_name);
     global.set_setting("site-description", site_description);
     global.set_setting("site-url", site_url);
+    global.set_setting("static-url", site_url);
     global.set_setting("theme", theme);
     global.set_setting("commenting-system", comment);
     string password_encoded = Auth::SHA256(password);

@@ -26,4 +26,12 @@ class GetPathModifier : public ctemplate::TemplateModifier {
   private:
     std::string url;
 };
+
+class GetStaticFileModifier : public ctemplate::TemplateModifier {
+  public:
+    MODIFY_SIGNATURE_;
+    void set_url(std::string url);
+  private:
+    std::string url;
+};
 #endif

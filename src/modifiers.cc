@@ -57,3 +57,19 @@ void GetPathModifier::set_url(std::string url) {
         this->url = url;
     }
 }
+
+void GetStaticFileModifier::Modify(const char* in, size_t inlen,
+                                   const PerExpandData* per_expand_data,
+                                   ExpandEmitter* outbuf, 
+                                   const std::string& arg) const {
+    using namespace std;
+    string path = arg.substr(1, arg.length() - 1);
+    string full_path = this->url + path;
+    outbuf->Emit(full_path);
+}
+
+void GetStaticFileModifier::set_url(std::string url) {
+    if (url != "") {
+        this->url = url;
+    }
+}

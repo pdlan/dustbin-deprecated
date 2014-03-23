@@ -83,6 +83,7 @@ bool AdminThemeHandler::get() {
         return true;
     }
     this->set_header("Content-Type", "text/html");
+    global.theme.refresh();
     TemplateDictionary dict("theme");
     global.theme.set_template_dict("theme", &dict, true);
     const vector<ThemeInfo>* themes = global.theme.get_themes_info();
@@ -163,8 +164,7 @@ bool AdminArticleHandler::get() {
     }
         this->render("list-articles", &dict, true);
     } else if (action == "new") {
-        dict.ShowSection("new");
-        this->render("new-edit-article", &dict, true);
+        this->render("new-article", &dict, true);
     } else if (action == "edit") {
         string id = this->get_regex_result(2);
         BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
@@ -188,8 +188,7 @@ bool AdminArticleHandler::get() {
         dict.SetValue("title", title);
         dict.SetValue("content", content);
         dict.SetValue("tags", tags);
-        dict.ShowSection("edit");
-        this->render("new-edit-article", &dict, true);
+        this->render("edit-article", &dict, true);
     } else if (action == "delete") {
         string id = this->get_regex_result(2);
         BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
