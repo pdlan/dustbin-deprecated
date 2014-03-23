@@ -111,4 +111,135 @@ bool Theme::set_theme(std::string name) {
     if (!AddModifier("x-format-time=", &this->format_time_modifier)) {
         fprintf(stderr, "Unable to add modifier x-format-time.\n");
     }
-    if (!AddModifie
+    if (!AddModifier("x-get-path=", &this->get_path_modifier)) {
+        fprintf(stderr, "Unable to add modifier x-get-path.\n");
+    }
+    if (!AddModifier("x-get-static-file=", &this->get_static_file_modifier)) {
+        fprintf(stderr, "Unable to add modifier x-get-static-file.\n");
+    }
+    return true;
+}
+
+void Theme::initialize() {
+    this->refresh();
+    recycled::StaticFileHandler::paths = &static_paths;
+}
+
+void Theme::refresh() {
+    using namespace std;
+    DIR* dir;
+    struct dirent* file;
+    struct stat file_stat;
+    if (!(dir = opendir("theme"))) {
+        return;
+    }
+    chdir("theme");
+    while (file = readdir(dir)) {
+        lstat(file->d_name, &file_stat);
+        if (S_IFDIR & file_stat.st_mode) {
+            std::string theme_path = file->d_name;
+            if (theme_path.length() > 0 && theme_path[0] == '.') {
+                continue;
+            }
+            string config_path = theme_path + "/theme.conf";
+            FILE* config_file = fopen(config_path.c_str(), "r");
+            if (!config_file) {
+                continue;
+            }
+            fseek(config_file, 0, SEEK_END);
+            size_t length = ftell(config_file);
+            fseek(config_file, 0, SEEK_SET);
+            char* buffer = new char[length];
+            fread(buffer, length, sizeof(char), config_file);
+            Json::Reader reader;
+            Json::Value theme_config;
+            if (!reader.parse(buffer, theme_config)) {
+                delete buffer;
+                fclose(config_file);
+                continue;
+            }
+            std::string name = theme_config["name"].asString();
+            std::string author = theme_config["author"].asString();
+            ThemeInfo info;
+            info.name = name;
+            info.author = author;
+            info.path = theme_path;
+            this->themes.push_back(info);
+            delete buffer;
+            fclose(config_file);
+        }
+    }
+    chdir("..");
+}
+
+bool Theme::load_json_file(std::string path, Json::Value* root) {
+    FILE* file = fopen(path.c_str(), "r");
+    if (!file) {
+        return false;
+    }
+    fseek(file, 0, SEEK_END);
+    size_t length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char* buffer = new char[length];
+    fread(buffer, length, sizeof(char), file);
+    Json::Reader reader;
+    if (!reader.parse(buffer, *root)) {
+        delete buffer;
+        fclose(file);
+        return false;
+    }
+    delete buffer;
+    fclose(file);
+    return true;
+}
+
+void Theme::set_title_templates() {
+    using namespace std;
+    using namespace ctemplate;
+    if (this->language["titles"].isNull()) {
+        return;
+    }
+    Json::Value titles = this->language["titles"];
+    Json::Value::Members members = titles.getMemberNames();
+    for (Json::Value::Members::iterator it = members.begin();
+         it != members.end(); ++ it) {
+        string template_name = *it;
+        if (titles[template_name].isString()) {
+            string title = titles[template_name].asString();
+            string cache_name = template_name + "_title";
+            StringToTemplateCache(cache_name, title, DO_NOT_STRIP);
+        }
+    }
+    Json::Value admin;
+    if (!Theme::load_json_file("admin/title.conf", &admin)) {
+        return;
+    }
+    members = admin.getMemberNames();
+    for (Json::Value::Members::iterator it = members.begin();
+         it != members.end(); ++ it) {
+        string template_name = *it;
+        if (admin[template_name].isString()) {
+            string title = admin[template_name].asString();
+            string cache_name = "admin_" + template_name + "_title";
+            StringToTemplateCache(cache_name, title, DO_NOT_STRIP);
+        }
+    }
+}
+
+void Theme::set_language_templates() {
+    using namespace std;
+    using namespace ctemplate;
+    Json::Value::Members members = this->language.getMemberNames();
+    for (Json::Value::Members::iterator it = members.begin();
+         it != members.end(); ++ it) {
+        string key = *it;
+        if (this->language[key].isString()) {
+            string value = this->language[key].asString();
+            string cache_name = "language_" + key;
+            if (value == "") {
+                continue;
+            }
+            StringToTemplateCache(cache_name, value, DO_NOT_STRIP);
+        }
+    }
+}
