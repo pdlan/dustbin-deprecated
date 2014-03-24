@@ -1,15 +1,21 @@
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <string>
 #include <recycled.h>
 #include <mongo/client/dbclient.h>
 #include <jsoncpp/json/json.h>
+#include <markdown.h>
+#include <buffer.h>
+#include <html.h>
 #include <ctemplate/template.h>
 #include "handlers.h"
 #include "global.h"
 
 extern Global global;
+
+std::string parse_content(std::string content);
 
 void DustbinHandler::render(std::string template_name,
                             ctemplate::TemplateDictionary* dict,
@@ -115,13 +121,14 @@ bool ArticleHandler::get() {
         tag_dict->ShowSection("tags");
     }
     string comment = this->load_comment();
-    if (id == "" || title == "" || content == "") {
+    string content_parsed = parse_content(content);
+    if (id == "" || title == "" || content_parsed == "") {
         this->on404();
         return true;
     }
     dict.SetValue("id", id);
     dict.SetValue("title", title);
-    dict.SetValue("content", content);
+    dict.SetValue("content", content_parsed);
     if (comment != "") {
         dict.SetValue("comment", comment);
     }
@@ -223,4 +230,26 @@ bool TagHandler::get() {
     global.theme.set_template_dict("tag", &dict);
     this->render("tag", &dict);
     return true;
+}
+
+std::string parse_content(std::string content) {
+    using namespace std;
+    const int OUTPUT_UNIT = 64;
+    if (content == "") {
+        return "";
+    }
+    struct buf* ob = bufnew(OUTPUT_UNIT);
+    struct sd_callbacks callbacks;
+	struct html_renderopt options;
+	struct sd_markdown* markdown;
+    sdhtml_renderer(&callbacks, &options, 0);
+    markdown = sd_markdown_new(0, 16, &callbacks, &options);
+    sd_markdown_render(ob, (const uint8_t*)content.c_str(), content.length(), markdown);
+    sd_markdown_free(markdown);
+    if (ob->size <= 0) {
+        return "";
+    }
+    string output((const char*)ob->data, ob->size);
+	bufrelease(ob);
+    return output;
 }

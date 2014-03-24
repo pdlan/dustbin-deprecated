@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 project(dustbin)
 include_directories(${dustbin_SOURCE_DIR}/include)
 include_directories(${dustbin_SOURCE_DIR}/recycled/include)
+include_directories(${dustbin_SOURCE_DIR}/sundown/include)
 add_subdirectory(recycled)
+add_subdirectory(sundown)
 
 
 set(MAIN_SRC_LIST
@@ -20,14 +22,14 @@ add_executable(dustbin ${MAIN_SRC_LIST})
 target_link_libraries(
     dustbin
     boost_filesystem
-    boost_program_options
     boost_thread-mt
-    boost_regex
     boost_system
+    boost_regex
     mongoclient
     fcgi
     ctemplate
     recycled
+    sundown
     event
     jsoncpp
     ssl
