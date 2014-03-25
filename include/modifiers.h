@@ -34,4 +34,19 @@ class GetStaticFileModifier : public ctemplate::TemplateModifier {
   private:
     std::string url;
 };
+
+class PlusModifier : public ctemplate::TemplateModifier {
+  public:
+    MODIFY_SIGNATURE_;
+};
+
+class ModifierManager {
+  public:
+    bool load_modifiers(Json::Value* language);
+  private:
+    FormatTimeModifier format_time_modifier;
+    GetPathModifier get_path_modifier;
+    GetStaticFileModifier get_static_file_modifier;
+    PlusModifier plus_modifier;
+};
 #endif
