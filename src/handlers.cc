@@ -61,11 +61,9 @@ bool PageHandler::get() {
     }
     TemplateDictionary dict("page");
     if (page < pages) {
-        dict.SetIntValue("next_page", page + 1);
         dict.ShowSection("next");
     }
     if (page > 1) {
-        dict.SetIntValue("prev_page", page - 1);
         dict.ShowSection("prev");
     }
     dict.SetIntValue("current_page", page);

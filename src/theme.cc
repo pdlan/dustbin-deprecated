@@ -105,18 +105,7 @@ bool Theme::set_theme(std::string name) {
     this->set_language_templates();
     this->static_paths["/static/(.*)"] = "theme/" + theme_path + "/static/";
     this->static_paths["/admin/static/(.*)"] = "admin/static/";
-    this->get_path_modifier.set_url(global.get_setting("site-url"));
-    this->get_static_file_modifier.set_url(global.get_setting("static-url"));
-    this->format_time_modifier.set_language(&this->language);
-    if (!AddModifier("x-format-time=", &this->format_time_modifier)) {
-        fprintf(stderr, "Unable to add modifier x-format-time.\n");
-    }
-    if (!AddModifier("x-get-path=", &this->get_path_modifier)) {
-        fprintf(stderr, "Unable to add modifier x-get-path.\n");
-    }
-    if (!AddModifier("x-get-static-file=", &this->get_static_file_modifier)) {
-        fprintf(stderr, "Unable to add modifier x-get-static-file.\n");
-    }
+    this->modifier_manager.load_modifiers(&this->language);
     return true;
 }
 

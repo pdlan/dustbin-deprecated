@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <string>
+#include <sstream>
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
 #include "modifiers.h"
+#include "global.h"
 
 using namespace ctemplate;
+extern Global global;
 
 void FormatTimeModifier::Modify(const char* in, size_t inlen,
                                 const PerExpandData* per_expand_data,
@@ -71,5 +74,37 @@ void GetStaticFileModifier::Modify(const char* in, size_t inlen,
 void GetStaticFileModifier::set_url(std::string url) {
     if (url != "") {
         this->url = url;
+    }
+}
+
+void PlusModifier::Modify(const char* in, size_t inlen,
+                                   const PerExpandData* per_expand_data,
+                                   ExpandEmitter* outbuf, 
+                                   const std::string& arg) const {
+    using namespace std;
+    string a_str(in, inlen);
+    string b_str = arg.substr(1, arg.length() - 1);
+    int a = atoi(a_str.c_str());
+    int b = atoi(b_str.c_str());
+    ostringstream buf;
+    buf << a + b;
+    outbuf->Emit(buf.str());
+}
+
+bool ModifierManager::load_modifiers(Json::Value* language) {
+    this->get_path_modifier.set_url(global.get_setting("site-url"));
+    this->get_static_file_modifier.set_url(global.get_setting("static-url"));
+    this->format_time_modifier.set_language(language);
+    if (!AddModifier("x-format-time=", &this->format_time_modifier)) {
+        return false;
+    }
+    if (!AddModifier("x-get-path=", &this->get_path_modifier)) {
+        return false;
+    }
+    if (!AddModifier("x-get-static-file=", &this->get_static_file_modifier)) {
+        false;
+    }
+    if (!AddModifier("x-plus=", &this->plus_modifier)) {
+        false;
     }
 }
