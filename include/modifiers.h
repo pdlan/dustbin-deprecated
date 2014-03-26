@@ -40,6 +40,11 @@ class PlusModifier : public ctemplate::TemplateModifier {
     MODIFY_SIGNATURE_;
 };
 
+class PrintLessModifier : public ctemplate::TemplateModifier {
+  public:
+    MODIFY_SIGNATURE_;
+};
+
 class ModifierManager {
   public:
     bool load_modifiers(Json::Value* language);
@@ -48,5 +53,6 @@ class ModifierManager {
     GetPathModifier get_path_modifier;
     GetStaticFileModifier get_static_file_modifier;
     PlusModifier plus_modifier;
+    PrintLessModifier print_less_modifier;
 };
 #endif

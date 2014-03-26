@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
     router.add("/article/(.*?)(?:/|)", ArticleHandler::create);
     router.add("/tag/(.*?)(?:/|)", TagHandler::create);
     router.add("/archives(?:/|)", ArchivesHandler::create);
+    router.add("/archives/page/(\\d*?)(?:/|)", ArchivesHandler::create);
     router.add("/admin/user/login(?:/|)", AdminLoginHandler::create);
     router.add("/admin/user/logout(?:/|)", AdminLogoutHandler::create);
     router.add("/admin(?:/|)", AdminIndexHandler::create);

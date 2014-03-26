@@ -16,6 +16,8 @@
 extern Global global;
 
 std::string parse_content(std::string content);
+std::auto_ptr<mongo::DBClientCursor>
+    page_articles(int page, int articles_per_page, int* number_of_pages);
 
 void DustbinHandler::render(std::string template_name,
                             ctemplate::TemplateDictionary* dict,
@@ -43,48 +45,47 @@ bool PageHandler::get() {
     using namespace mongo;
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
+    TemplateDictionary dict("page");
     string page_str = this->get_regex_result(1);
     int page = 1;
     if (page_str != "") {
         page = atoi(page_str.c_str());
     }
     const Json::Value* config = global.theme.get_config();
-    int articles_per_page = config->get("articles-per-page", 20).asInt();
-    int limit = articles_per_page;
-    int skip = articles_per_page * (page - 1);
-    int articles_count =
-     global.db_conn.count(global.db_name + ".article", BSONObj());
-    int pages = ceil(double(articles_count) / articles_per_page);
-    if (page > pages) {
+    int articles_per_page = 20;
+    if (config->get("articles-per-page", 0).isObject()) {
+        Json::Value obj = (*config)["articles-per-page"];
+        articles_per_page = obj.get("page", 20).asInt();
+    }
+    int number_of_pages = 0;
+    auto_ptr<DBClientCursor> cursor =
+      page_articles(page, articles_per_page, &number_of_pages);
+    if (page > number_of_pages) {
         this->on404();
         return true;
     }
-    TemplateDictionary dict("page");
-    if (page < pages) {
+    if (page < number_of_pages) {
         dict.ShowSection("next");
     }
     if (page > 1) {
         dict.ShowSection("prev");
     }
     dict.SetIntValue("current_page", page);
-    dict.SetIntValue("number_of_pages", pages);
-    Query qu = Query();
-    auto_ptr<DBClientCursor> cursor =
-     global.db_conn.query(global.db_name + ".article",
-                          qu.sort("time", -1), limit, skip);
+    dict.SetIntValue("number_of_pages", number_of_pages);
     while (cursor->more()) {
         BSONObj p = cursor->next();
         string id = p.getStringField("id");
         string title = p.getStringField("title");
         string content = p.getStringField("content");
+        string content_parsed = parse_content(content);
         time_t timestamp = p.getIntField("time");
-        if (id == "" || title == "" || content == "") {
+        if (id == "" || title == "" || content_parsed == "") {
             continue;
         }
         TemplateDictionary* article = dict.AddSectionDictionary("articles");
         article->SetValue("id", id);
         article->SetValue("title", title);
-        article->SetValue("content", content);
+        article->SetValue("content", content_parsed);
         article->SetIntValue("date", timestamp);
         article->ShowSection("articles");
     }
@@ -162,9 +163,32 @@ bool ArchivesHandler::get() {
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("archives");
-    Query qu = Query();
+    string page_str = this->get_regex_result(1);
+    int page = 1;
+    if (page_str != "") {
+        page = atoi(page_str.c_str());
+    }
+    const Json::Value* config = global.theme.get_config();
+    int articles_per_page = 20;
+    if (config->get("articles-per-page", 0).isObject()) {
+        Json::Value obj = (*config)["articles-per-page"];
+        articles_per_page = obj.get("archives", 20).asInt();
+    }
+    int number_of_pages = 0;
     auto_ptr<DBClientCursor> cursor =
-     global.db_conn.query(global.db_name + ".article", qu.sort("time", -1));
+      page_articles(page, articles_per_page, &number_of_pages);
+    if (page > number_of_pages) {
+        this->on404();
+        return true;
+    }
+    if (page < number_of_pages) {
+        dict.ShowSection("next");
+    }
+    if (page > 1) {
+        dict.ShowSection("prev");
+    }
+    dict.SetIntValue("current_page", page);
+    dict.SetIntValue("number_of_pages", number_of_pages);
     TemplateDictionary* year_dict;
     for (int i = 0; cursor->more();) {
         BSONObj p = cursor->next();
@@ -200,11 +224,49 @@ bool TagHandler::get() {
     using namespace mongo;
     using namespace ctemplate;
     this->set_header("Content-Type", "text/html");
-    TemplateDictionary dict("archives");
+    TemplateDictionary dict("tag");
     string tag = this->get_regex_result(1);
+    string page_str = this->get_argument("page");
+    int page = 1;
+    if (page_str != "") {
+        page = atoi(page_str.c_str());
+    }
+    const Json::Value* config = global.theme.get_config();
+    int articles_per_page = 20;
+    if (config->get("articles-per-page", 0).isObject()) {
+        Json::Value obj = (*config)["articles-per-page"];
+        articles_per_page = obj.get("tag", 20).asInt();
+    }
+    int number_of_pages = 0;
+    int articles_count =
+     global.db_conn.count(global.db_name + ".article", BSON("tag" << tag));
+    int limit, skip;
+    if (articles_per_page != 0) {
+        limit = articles_per_page;
+        skip = articles_per_page * (page - 1);
+        number_of_pages = ceil(double(articles_count) / articles_per_page);
+    } else {
+        limit = articles_count;
+        skip = 0;
+        number_of_pages = 1;
+    }
+    Query qu = QUERY("tag" << tag);
+    std::auto_ptr<DBClientCursor> cursor =
+     global.db_conn.query(global.db_name + ".article",
+                          qu.sort("time", -1), limit, skip);
+    if (page > number_of_pages) {
+        this->on404();
+        return true;
+    }
+    if (page < number_of_pages) {
+        dict.ShowSection("next");
+    }
+    if (page > 1) {
+        dict.ShowSection("prev");
+    }
+    dict.SetIntValue("current_page", page);
+    dict.SetIntValue("number_of_pages", number_of_pages);
     dict.SetValue("tag", tag);
-    auto_ptr<DBClientCursor> cursor =
-     global.db_conn.query(global.db_name + ".article", QUERY("tag" << tag));
     int count;
     for (count = 0; cursor->more(); ++ count) {
         BSONObj p = cursor->next();
@@ -250,4 +312,28 @@ std::string parse_content(std::string content) {
     string output((const char*)ob->data, ob->size);
 	bufrelease(ob);
     return output;
+}
+
+std::auto_ptr<mongo::DBClientCursor>
+    page_articles(int page, int articles_per_page, int* number_of_pages) {
+    using namespace mongo;
+    int articles_count =
+     global.db_conn.count(global.db_name + ".article", BSONObj());
+    int limit, skip;
+    int pages;
+    if (articles_per_page != 0) {
+        limit = articles_per_page;
+        skip = articles_per_page * (page - 1);
+        pages = ceil(double(articles_count) / articles_per_page);
+    } else {
+        limit = articles_count;
+        skip = 0;
+        pages = 1;
+    }
+    *number_of_pages = pages;
+    Query qu = Query();
+    std::auto_ptr<DBClientCursor> cursor =
+     global.db_conn.query(global.db_name + ".article",
+                          qu.sort("time", -1), limit, skip);
+    return cursor;
 }
