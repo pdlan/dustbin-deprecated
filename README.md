@@ -16,7 +16,7 @@ Some features in future:
 
 *   Plugin
 
-*   Native Commeng
+*   Native Comment
 
 Themes
 ======

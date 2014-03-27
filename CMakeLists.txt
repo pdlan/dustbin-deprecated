@@ -15,6 +15,7 @@ set(MAIN_SRC_LIST
     src/auth.cc
     src/modifiers.cc
     src/global.cc
+    src/article.cc
     src/install.cc
 )
 
