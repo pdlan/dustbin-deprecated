@@ -91,20 +91,6 @@ void PlusModifier::Modify(const char* in, size_t inlen,
     outbuf->Emit(buf.str());
 }
 
-void PrintLessModifier::Modify(const char* in, size_t inlen,
-                                   const PerExpandData* per_expand_data,
-                                   ExpandEmitter* outbuf, 
-                                   const std::string& arg) const {
-    using namespace std;
-    string content(in, inlen);
-    int length = atoi(arg.substr(1, arg.length() - 1).c_str());
-    if (content.length() <= length) {
-        outbuf->Emit(content);
-    } else {
-        outbuf->Emit(content.substr(0, length));
-    }
-}
-
 bool ModifierManager::load_modifiers(Json::Value* language) {
     this->get_path_modifier.set_url(global.get_setting("site-url"));
     this->get_static_file_modifier.set_url(global.get_setting("static-url"));
@@ -119,9 +105,6 @@ bool ModifierManager::load_modifiers(Json::Value* language) {
         false;
     }
     if (!AddModifier("x-plus=", &this->plus_modifier)) {
-        false;
-    }
-    if (!AddModifier("x-print-less=", &this->print_less_modifier)) {
         false;
     }
 }

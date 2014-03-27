@@ -93,6 +93,8 @@ bool ArticleHandler::get() {
     }
     parse_article(&article);
     set_article_dict(&dict, &article);
+    string comment = this->load_comment();
+    dict.SetValue("comment", comment);
     global.theme.set_template_dict("article", &dict);
     this->render("article", &dict);
     return true;
