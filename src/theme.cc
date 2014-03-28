@@ -116,6 +116,7 @@ void Theme::initialize() {
 
 void Theme::refresh() {
     using namespace std;
+    this->themes.clear();
     DIR* dir;
     struct dirent* file;
     struct stat file_stat;

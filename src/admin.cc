@@ -117,8 +117,8 @@ bool AdminThemeHandler::post() {
     if (action == "enable") {
         if (global.theme.set_theme(theme)) {
             response["status"] = "success";
-            global.db_conn.update(global.db_name + ".article", 
-                                  QUERY("key" << "theme"), 
+            global.db_conn.update(global.db_name + ".setting",
+                                  QUERY("key" << "theme"),
                                   BSON("key" << "theme" << "value" << theme));
             this->write(writer.write(response));
         } else {
