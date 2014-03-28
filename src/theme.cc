@@ -78,6 +78,8 @@ bool Theme::set_theme(std::string name) {
     using namespace std;
     using namespace ctemplate;
     std::string theme_path;
+    this->set_admin_title_templates();
+    this->static_paths["/admin/static/(.*)"] = "admin/static/";
     bool has_found = false;
     for (vector<ThemeInfo>::iterator it = this->themes.begin();
          it != this->themes.end(); ++ it) {
@@ -104,7 +106,6 @@ bool Theme::set_theme(std::string name) {
     this->set_title_templates();
     this->set_language_templates();
     this->static_paths["/static/(.*)"] = "theme/" + theme_path + "/static/";
-    this->static_paths["/admin/static/(.*)"] = "admin/static/";
     this->modifier_manager.load_modifiers(&this->language);
     return true;
 }
@@ -200,11 +201,16 @@ void Theme::set_title_templates() {
             StringToTemplateCache(cache_name, title, DO_NOT_STRIP);
         }
     }
+}
+
+void Theme::set_admin_title_templates() {
+    using namespace std;
+    using namespace ctemplate;
     Json::Value admin;
     if (!Theme::load_json_file("admin/title.conf", &admin)) {
         return;
     }
-    members = admin.getMemberNames();
+    Json::Value::Members members = admin.getMemberNames();
     for (Json::Value::Members::iterator it = members.begin();
          it != members.end(); ++ it) {
         string template_name = *it;

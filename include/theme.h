@@ -36,6 +36,7 @@ class Theme {
     static bool load_json_file(std::string path, Json::Value* root);
     void set_title_templates();
     void set_language_templates();
+    void set_admin_title_templates();
     ModifierManager modifier_manager;
 };
 
