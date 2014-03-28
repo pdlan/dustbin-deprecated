@@ -1,13 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-us">
   <head>
     <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/bootstrap.min.css}}">
     <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/style.css}}">
     <title>{{block_title}}</title>
   </head>
   <body>
-    <div id="main">
-     {{block_content}}
-    <div>
+    <div id="container" class="container-fluid">
+	  <div class="row">
+	    <div class="col-md-12">
+        {{block_content}}
+	    </div>
+	  </div>
+    </div>
   </body>
 </html>
