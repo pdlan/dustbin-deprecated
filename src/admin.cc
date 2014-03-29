@@ -190,15 +190,20 @@ bool AdminArticleHandler::get() {
         dict.SetValue("tags", tags);
         this->render("edit-article", &dict, true);
     } else if (action == "delete") {
+        Json::Value response;
+        Json::FastWriter writer;
         string id = this->get_regex_result(2);
         BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
                                            QUERY("id" << id));
         if (p.isEmpty()) {
-            this->on404();
-            return true;
+            response["status"] = "failed";
+            response["reson"] = "notexist";
+        } else {
+            response["status"] = "success";
+            global.db_conn.remove(global.db_name + ".article",
+                                  QUERY("id" << id));
         }
-        global.db_conn.remove(global.db_name + ".article", QUERY("id" << id));
-        this->redirect("/admin/article/list/");
+        this->write(writer.write(response));
     }
     return true;
 }
@@ -287,6 +292,8 @@ bool AdminSettingHandler::get() {
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("setting");
     global.theme.set_template_dict("setting", &dict, true);
+    dict.SetValue("comment",
+                  global.setting.get_str_setting("commenting-system"));
     this->render("setting", &dict, true);
     return true;
 }
@@ -305,19 +312,13 @@ bool AdminSettingHandler::post() {
     string site_name = this->get_post_argument("sitename");
     string site_url = this->get_post_argument("siteurl");
     string site_description = this->get_post_argument("sitedescription");
-    map<string, string> settings;
-    settings["site-name"] = site_name;
-    settings["site_url"] = site_url;
-    settings["site-description"] = site_description;
-    for (map<string, string>::iterator it = settings.begin();
-         it != settings.end(); ++ it) {
-        string key = it->first;
-        string value = it->second;
-        global.db_conn.update(global.db_name + ".setting", 
-                              QUERY("key" << key), 
-                              BSON("key" << key << "value" << value));
-    }
+    string comment = this->get_post_argument("comment");
+    global.setting.set_setting("site-name", site_name);
+    global.setting.set_setting("site-url", site_url);
+    global.setting.set_setting("site-description", site_description);
+    global.setting.set_setting("commenting-system", comment);
     global.theme.set_template_dict("setting", &dict, true);
+    dict.SetValue("comment", comment);
     this->render("setting", &dict, true);
     return true;
 }

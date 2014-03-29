@@ -102,7 +102,7 @@ bool ArticleHandler::get() {
 
 std::string ArticleHandler::load_comment() {
     using namespace std;
-    string type = global.get_setting("commenting-system");
+    string type = global.setting.get_str_setting("commenting-system");
     string path = "comment/" + type + ".html";
     FILE* file = fopen(path.c_str(), "r");
     if (!file) {

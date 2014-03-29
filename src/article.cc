@@ -10,7 +10,7 @@
 
 extern Global global;
 
-PageInfo page_articles(int current_page, int articles_per_page, 
+PageInfo page_articles(int current_page, int articles_per_page,
                        std::string tag) {
     using namespace mongo;
     PageInfo info;
@@ -110,7 +110,7 @@ bool get_one_article(std::string id, Article* article) {
     return true;
 }
 
-void set_article_dict(ctemplate::TemplateDictionary* dict, 
+void set_article_dict(ctemplate::TemplateDictionary* dict,
                       const Article* article) {
     using namespace std;
     using namespace ctemplate;

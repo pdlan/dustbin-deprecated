@@ -78,9 +78,9 @@ void GetStaticFileModifier::set_url(std::string url) {
 }
 
 void PlusModifier::Modify(const char* in, size_t inlen,
-                                   const PerExpandData* per_expand_data,
-                                   ExpandEmitter* outbuf, 
-                                   const std::string& arg) const {
+                          const PerExpandData* per_expand_data,
+                          ExpandEmitter* outbuf, 
+                          const std::string& arg) const {
     using namespace std;
     string a_str(in, inlen);
     string b_str = arg.substr(1, arg.length() - 1);
@@ -92,8 +92,8 @@ void PlusModifier::Modify(const char* in, size_t inlen,
 }
 
 bool ModifierManager::load_modifiers(Json::Value* language) {
-    this->get_path_modifier.set_url(global.get_setting("site-url"));
-    this->get_static_file_modifier.set_url(global.get_setting("static-url"));
+    this->get_path_modifier.set_url(global.setting.get_str_setting("site-url"));
+    this->get_static_file_modifier.set_url(global.setting.get_str_setting("static-url"));
     this->format_time_modifier.set_language(language);
     if (!AddModifier("x-format-time=", &this->format_time_modifier)) {
         return false;

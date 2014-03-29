@@ -4,7 +4,6 @@
 #include <recycled.h>
 #include <ctemplate/template.h> 
 #include "global.h"
-
 class DustbinHandler : public recycled::Handler {
   protected:
     void render(std::string template_name, 

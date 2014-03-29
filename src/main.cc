@@ -9,6 +9,7 @@
 #include "admin.h"
 #include "global.h"
 #include "install.h"
+#include "setting.h"
 
 extern Global global;
 Global global;
@@ -97,6 +98,6 @@ bool initialize(std::string config_path,
     global.db_name = db_name;
     global.auth.set_db_config(&global.db_conn, db_name);
     global.theme.initialize();
-    global.theme.set_theme(global.get_setting("theme"));
+    global.theme.set_theme(global.setting.get_str_setting("theme"));
     return true;
 }

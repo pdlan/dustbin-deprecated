@@ -7,7 +7,7 @@ struct Article {
     std::string id;
     std::string title;
     std::string content;
-    int timestamp;
+    time_t timestamp;
     std::vector<std::string> tags;
 };
 
@@ -17,10 +17,10 @@ struct PageInfo {
     int skip;
 };
 
-PageInfo page_articles(int current_page, int articles_per_page, 
+PageInfo page_articles(int current_page, int articles_per_page,
                        std::string tag = "");
 std::vector<Article> get_articles(int limit, int skip, std::string tag = "");
-void set_article_dict(ctemplate::TemplateDictionary* dict, 
+void set_article_dict(ctemplate::TemplateDictionary* dict,
                       const Article* article);
 bool get_one_article(std::string id, Article* article);
 std::string parse_content(std::string content);

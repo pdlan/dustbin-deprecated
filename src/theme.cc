@@ -13,9 +13,9 @@ void Theme::set_template_dict(std::string template_name,
                               bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
-    dict->SetValue("site_name", global.get_setting("site-name"));
-    dict->SetValue("site_description", global.get_setting("site-description"));
-    dict->SetValue("site_url", global.get_setting("site-url"));
+    dict->SetValue("site_name", global.setting.get_str_setting("site-name"));
+    dict->SetValue("site_description", global.setting.get_str_setting("site-description"));
+    dict->SetValue("site_url", global.setting.get_str_setting("site-url"));
     if (is_admin_template) {
         return;
     }

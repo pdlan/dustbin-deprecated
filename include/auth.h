@@ -3,7 +3,6 @@
 #include <string>
 #include <recycled.h>
 #include <ctemplate/template.h>
-
 class Auth {
   public:
     static const int success = 0;
@@ -17,5 +16,4 @@ class Auth {
     mongo::DBClientConnection* db_conn;
     std::string db_name;
 };
-
 #endif

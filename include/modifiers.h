@@ -3,7 +3,6 @@
 #include <string>
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
-
 #define MODIFY_SIGNATURE_                                               \
  public:                                                                \
   virtual void Modify(const char* in, size_t inlen,                     \

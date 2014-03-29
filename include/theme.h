@@ -5,7 +5,6 @@
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
 #include "modifiers.h"
-
 struct ThemeInfo {
     std::string name;
     std::string path;

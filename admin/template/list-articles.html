@@ -1,10 +1,42 @@
-<ul id="posts">
-  {{#articles}}
-    <li>
-      <span class="meta">{{date}}</span> <a href="{{:x-get-path=/article/}}{{id}}/">{{title}}</a>
-      <a href="{{:x-get-path=/admin/}}article/edit/{{id}}/">Edit</a>
-      <a href="{{:x-get-path=/admin/}}article/delete/{{id}}/">Delete</a>
-    </li>
-  {{/articles}}
+<div class="modal fade" id="confirm-delete-article" tabindex="-1" role="dialog" aria-labelledby="confirm-delete-article-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="confirm-delete-label">Delete Article</h4>
+      </div>
+      <div class="modal-body">
+        Do you really want to delete this article?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger really-delete">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="col-md-10 col-md-offset-1">
+  <header id="header">
+    <h1>Articles</h1>
+  </header>
+  <table class="table table-condensed">
+    {{#articles}}
+    <tr articleid="{{id}}">
+      <td class="col-md-2 col-md-offset-1">
+        <span class="meta">{{date}}</span>
+      </td>
+      <td class="col-md-7 col-md-offset-3">
+        <a href="{{:x-get-path=/article/}}{{id}}/">{{title}}</a>
+      </td>
+      <td class="col-md-1 col-md-offset-10">
+        <a href="{{:x-get-path=/admin/}}article/edit/{{id}}/">Edit</a>
+      </td>
+      <td class="col-md-1 col-md-offset-11">
+        <a articleid="{{id}}" class="delete-article">Delete</a>
+      </td>
+    </tr>
+    {{/articles}}
+  </table>
   <a href="{{:x-get-path=/admin/}}article/new/">New Article</a>
-</ul>
+</div>
+<script type="text/javascript" src="{{:x-get-static-file=/admin/static/js/articles.js}}"></script>

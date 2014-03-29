@@ -5,7 +5,6 @@
 #include <ctemplate/template.h>
 #include "global.h"
 #include "handlers.h"
-
 class AdminLoginHandler : public DustbinHandler {
   public:
     bool get();
@@ -57,5 +56,4 @@ class AdminSettingHandler : public DustbinHandler {
         return new AdminSettingHandler;
     }
 };
-
 #endif
