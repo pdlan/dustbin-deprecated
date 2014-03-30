@@ -7,7 +7,7 @@ extern Global global;
 
 std::string Setting::get_str_setting(std::string key) {
     using namespace mongo;
-    BSONObj p = global.db_conn.findOne(global.db_name + ".setting", 
+    BSONObj p = global.db_conn.findOne(global.db_name + ".setting",
                                        QUERY("key" << key));
     if (!p.hasField("value") || p.getField("value").type() != String) {
         return "";
@@ -20,7 +20,7 @@ void Setting::set_setting(std::string key, std::string value) {
     if (key == "" || value == "") {
         return;
     }
-    BSONObj p = global.db_conn.findOne(global.db_name + ".setting", 
+    BSONObj p = global.db_conn.findOne(global.db_name + ".setting",
                                        QUERY("key" << key));
     if (p.isEmpty()) {
         global.db_conn.insert(global.db_name + ".setting",
