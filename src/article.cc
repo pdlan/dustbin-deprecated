@@ -10,8 +10,8 @@
 
 extern Global global;
 
-PageInfo page_articles(int current_page, int articles_per_page,
-                       std::string tag) {
+PageInfo ArticleManager::page_articles(int current_page, int articles_per_page,
+                                       std::string tag) {
     using namespace mongo;
     PageInfo info;
     int articles_count;
@@ -39,7 +39,8 @@ PageInfo page_articles(int current_page, int articles_per_page,
     return info;
 }
 
-std::vector<Article> get_articles(int limit, int skip, std::string tag) {
+std::vector<Article> ArticleManager::get_articles(int limit, int skip,
+                                                  std::string tag) {
     using namespace std;
     using namespace mongo;
     auto_ptr<DBClientCursor> cursor;
@@ -79,7 +80,7 @@ std::vector<Article> get_articles(int limit, int skip, std::string tag) {
     return articles;
 }
 
-bool get_one_article(std::string id, Article* article) {
+bool ArticleManager::get_one_article(std::string id, Article* article) {
     using namespace std;
     using namespace mongo;
     if (!article) {
@@ -110,7 +111,7 @@ bool get_one_article(std::string id, Article* article) {
     return true;
 }
 
-void set_article_dict(ctemplate::TemplateDictionary* dict,
+void ArticleManager::set_article_dict(ctemplate::TemplateDictionary* dict,
                       const Article* article) {
     using namespace std;
     using namespace ctemplate;
@@ -129,7 +130,7 @@ void set_article_dict(ctemplate::TemplateDictionary* dict,
     dict->ShowSection("tags");
 }
 
-std::string parse_content(std::string content) {
+std::string ArticleManager::parse_content(std::string content) {
     using namespace std;
     const int OUTPUT_UNIT = 64;
     if (content == "") {
@@ -151,7 +152,7 @@ std::string parse_content(std::string content) {
     return output;
 }
 
-void parse_article(Article* article) {
+void ArticleManager::parse_article(Article* article) {
     using namespace std;
     if (!article) {
         return;

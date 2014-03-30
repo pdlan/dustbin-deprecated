@@ -11,21 +11,31 @@ struct ThemeInfo {
     std::string author;
 };
 
+class BlockHandler {
+  public:
+    virtual std::string handle() = 0;
+    virtual std::string get_block_name() = 0;
+    virtual std::string get_template_name() = 0;
+};
 
 class Theme {
   public:
+    ~Theme();
     void set_template_dict(std::string template_name,
-                           ctemplate::TemplateDictionary* dict, 
+                           ctemplate::TemplateDictionary* dict,
                            bool is_admin_template = false);
-    void render(std::string template_name, 
-                std::string* output, 
-                ctemplate::TemplateDictionary* dict, 
+    void set_blocks(std::string template_name,
+                    ctemplate::TemplateDictionary* dict);
+    void render(std::string template_name,
+                std::string* output,
+                ctemplate::TemplateDictionary* dict,
                 bool is_admin_template);
     bool set_theme(std::string name);
     const Json::Value* get_config();
     const std::vector<ThemeInfo>* get_themes_info();
     void initialize();
     void refresh();
+    bool add_block(BlockHandler* handler);
   private:
     std::vector<ThemeInfo> themes;
     std::map<std::string, std::string> static_paths;
@@ -37,6 +47,7 @@ class Theme {
     void set_language_templates();
     void set_admin_title_templates();
     ModifierManager modifier_manager;
+    std::map<std::string, std::vector<BlockHandler*>*> block_handlers;
 };
 
 inline const Json::Value* Theme::get_config() {
@@ -46,5 +57,4 @@ inline const Json::Value* Theme::get_config() {
 inline const std::vector<ThemeInfo>* Theme::get_themes_info() {
     return &this->themes;
 }
-#undef MODIFY_SIGNATURE_
 #endif

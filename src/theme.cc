@@ -3,19 +3,34 @@
 #include <string>
 #include <jsoncpp/json/json.h>
 #include <recycled.h>
-#include "handlers.h"
+#include "global.h"
+#include "setting.h"
 #include "theme.h"
 
 extern Global global;
+
+Theme::~Theme() {
+    for (std::map<std::string, std::vector<BlockHandler*>*>::iterator it =
+         this->block_handlers.begin();
+         it != this->block_handlers.end(); ++it) {
+        std::vector<BlockHandler*>* handlers = it->second;
+        if (handlers) {
+            delete handlers;
+        }
+    }
+}
 
 void Theme::set_template_dict(std::string template_name,
                               ctemplate::TemplateDictionary* dict,
                               bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
-    dict->SetValue("site_name", global.setting.get_str_setting("site-name"));
-    dict->SetValue("site_description", global.setting.get_str_setting("site-description"));
-    dict->SetValue("site_url", global.setting.get_str_setting("site-url"));
+    dict->SetValue("site_name",
+                   global.setting.get_str_setting("site-name"));
+    dict->SetValue("site_description",
+                   global.setting.get_str_setting("site-description"));
+    dict->SetValue("site_url",
+                   global.setting.get_str_setting("site-url"));
     if (is_admin_template) {
         return;
     }
@@ -35,6 +50,31 @@ void Theme::set_template_dict(std::string template_name,
                 continue;
             }
             dict->SetValue(cache_name, buffer);
+        }
+    }
+    this->set_blocks(template_name, dict);
+}
+
+void Theme::set_blocks(std::string template_name,
+                       ctemplate::TemplateDictionary* dict) {
+    using namespace std;
+    if (this->block_handlers.count(template_name)) {
+        vector<BlockHandler*>* handlers = this->block_handlers[template_name];
+        if (handlers) { 
+            for (vector<BlockHandler*>::iterator it = handlers->begin();
+                 it != handlers->end(); ++it) {
+                BlockHandler* handler = *it;
+                if (!handler) {
+                    continue;
+                }
+                string block_name = handler->get_block_name();
+                string key = "block_" + block_name;
+                string value = handler->handle();
+                if (key == "" || value == "") {
+                    continue;
+                }
+                dict->SetValue(key, value);
+            }
         }
     }
 }
@@ -238,4 +278,25 @@ void Theme::set_language_templates() {
             StringToTemplateCache(cache_name, value, DO_NOT_STRIP);
         }
     }
+}
+
+bool Theme::add_block(BlockHandler* handler) {
+    using namespace std;
+    if (!handler) {
+        return false;
+    }
+    string template_name = handler->get_template_name();
+    string block_name = handler->get_block_name();
+    vector<BlockHandler*>* handlers_for_template;
+    if (!this->block_handlers.count(template_name)) {
+        handlers_for_template = new vector<BlockHandler*>;
+        this->block_handlers[template_name] = handlers_for_template;
+    } else {
+        handlers_for_template = this->block_handlers[template_name];
+    }
+    if (!handlers_for_template) {
+        return false;
+    }
+    handlers_for_template->push_back(handler);
+    return true;
 }

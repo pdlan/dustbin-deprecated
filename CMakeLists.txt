@@ -5,6 +5,7 @@ include_directories(${dustbin_SOURCE_DIR}/recycled/include)
 include_directories(${dustbin_SOURCE_DIR}/sundown/include)
 add_subdirectory(recycled)
 add_subdirectory(sundown)
+add_subdirectory(plugin)
 
 
 set(MAIN_SRC_LIST
@@ -16,6 +17,7 @@ set(MAIN_SRC_LIST
     src/modifiers.cc
     src/article.cc
     src/setting.cc
+    src/plugin.cc
     src/install.cc
 )
 

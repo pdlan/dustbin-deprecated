@@ -51,7 +51,8 @@ bool PageHandler::get() {
         Json::Value obj = (*config)["articles-per-page"];
         articles_per_page = obj.get("page", 20).asInt();
     }
-    PageInfo page = page_articles(current_page, articles_per_page);
+    PageInfo page =
+        global.article.page_articles(current_page, articles_per_page);
     if (current_page > page.number_of_pages) {
         this->on404();
         return true;
@@ -64,14 +65,15 @@ bool PageHandler::get() {
     }
     dict.SetIntValue("current_page", current_page);
     dict.SetIntValue("number_of_pages", page.number_of_pages);
-    vector<Article> articles = get_articles(page.limit, page.skip);
+    vector<Article> articles =
+        global.article.get_articles(page.limit, page.skip);
     for (vector<Article>::iterator it = articles.begin();
          it != articles.end(); ++it) {
         Article article = *it;
-        parse_article(&article);
+        global.article.parse_article(&article);
         TemplateDictionary* article_dict =
-         dict.AddSectionDictionary("articles");
-        set_article_dict(article_dict, &article);
+        dict.AddSectionDictionary("articles");
+        global.article.set_article_dict(article_dict, &article);
     }
     dict.ShowSection("articles");
     global.theme.set_template_dict("page", &dict);
@@ -87,12 +89,12 @@ bool ArticleHandler::get() {
     TemplateDictionary dict("article");
     string id = this->get_regex_result(1);
     Article article;
-    if (!get_one_article(id, &article)) {
+    if (!global.article.get_one_article(id, &article)) {
         this->on404();
         return true;
     }
-    parse_article(&article);
-    set_article_dict(&dict, &article);
+    global.article.parse_article(&article);
+    global.article.set_article_dict(&dict, &article);
     string comment = this->load_comment();
     dict.SetValue("comment", comment);
     global.theme.set_template_dict("article", &dict);
@@ -137,7 +139,8 @@ bool ArchivesHandler::get() {
         Json::Value obj = (*config)["articles-per-page"];
         articles_per_page = obj.get("archives", 20).asInt();
     }
-    PageInfo page = page_articles(current_page, articles_per_page);
+    PageInfo page =
+        global.article.page_articles(current_page, articles_per_page);
     if (current_page > page.number_of_pages) {
         this->on404();
         return true;
@@ -151,10 +154,11 @@ bool ArchivesHandler::get() {
     dict.SetIntValue("current_page", current_page);
     dict.SetIntValue("number_of_pages", page.number_of_pages);
     TemplateDictionary* year_dict;
-    vector<Article> articles = get_articles(page.limit, page.skip);
+    vector<Article> articles =
+        global.article.get_articles(page.limit, page.skip);
     for (int i = 0, j = 0; i < articles.size(); ++i) {
         Article article = articles[i];
-        parse_article(&article);
+        global.article.parse_article(&article);
         time_t timestamp = article.timestamp;
         tm* timeinfo = localtime(&timestamp);
         int year = timeinfo->tm_year + 1900;
@@ -164,8 +168,8 @@ bool ArchivesHandler::get() {
             j = year;
         }
         TemplateDictionary* article_dict =
-         year_dict->AddSectionDictionary("articles");
-        set_article_dict(article_dict, &article);
+        year_dict->AddSectionDictionary("articles");
+        global.article.set_article_dict(article_dict, &article);
     }
     dict.ShowSection("articles");
     global.theme.set_template_dict("archives", &dict);
@@ -195,7 +199,8 @@ bool TagHandler::get() {
         Json::Value obj = (*config)["articles-per-page"];
         articles_per_page = obj.get("tag", 20).asInt();
     }
-    PageInfo page = page_articles(current_page, articles_per_page, tag);
+    PageInfo page =
+        global.article.page_articles(current_page, articles_per_page, tag);
     if (current_page > page.number_of_pages) {
         this->on404();
         return true;
@@ -208,14 +213,15 @@ bool TagHandler::get() {
     }
     dict.SetIntValue("current_page", current_page);
     dict.SetIntValue("number_of_pages", page.number_of_pages);
-    vector<Article> articles = get_articles(page.limit, page.skip, tag);
+    vector<Article> articles =
+        global.article.get_articles(page.limit, page.skip, tag);
     int i = 0;
     for (; i < articles.size(); ++i) {
         Article article = articles[i];
-        parse_article(&article);
+        global.article.parse_article(&article);
         TemplateDictionary* article_dict =
-         dict.AddSectionDictionary("articles");
-        set_article_dict(article_dict, &article);
+        dict.AddSectionDictionary("articles");
+        global.article.set_article_dict(article_dict, &article);
     }
     if (i == 0) {
         this->on404();

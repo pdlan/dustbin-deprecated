@@ -48,4 +48,5 @@ class ModifierManager {
     GetStaticFileModifier get_static_file_modifier;
     PlusModifier plus_modifier;
 };
+#undef MODIFY_SIGNATURE_
 #endif

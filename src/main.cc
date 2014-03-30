@@ -7,9 +7,9 @@
 #include <mongo/client/dbclient.h>
 #include "handlers.h"
 #include "admin.h"
+#include "setting.h"
 #include "global.h"
 #include "install.h"
-#include "setting.h"
 
 extern Global global;
 Global global;
@@ -90,7 +90,7 @@ bool initialize(std::string config_path,
     string db_host = root.get("db_host", "localhost").asString();
     string db_name = root.get("db_name", "").asString();
     try {
-      global.db_conn.connect(db_host);
+        global.db_conn.connect(db_host);
     } catch (const mongo::DBException &e) {
         printf("caught %s\n", e.what());
         return false;
@@ -99,5 +99,6 @@ bool initialize(std::string config_path,
     global.auth.set_db_config(&global.db_conn, db_name);
     global.theme.initialize();
     global.theme.set_theme(global.setting.get_str_setting("theme"));
+    global.plugin.initialize();
     return true;
 }

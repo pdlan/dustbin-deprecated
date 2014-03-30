@@ -5,6 +5,8 @@
 #include "theme.h"
 #include "auth.h"
 #include "setting.h"
+#include "article.h"
+#include "plugin.h"
 class Global {
   public:
     mongo::DBClientConnection db_conn;
@@ -12,5 +14,7 @@ class Global {
     Theme theme;
     Auth auth;
     Setting setting;
+    ArticleManager article;
+    PluginManager plugin;
 };
 #endif
