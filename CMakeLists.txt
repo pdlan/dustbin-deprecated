@@ -40,4 +40,3 @@ target_link_libraries(
 
 configure_file(conf/dustbin.conf dustbin.conf)
 file(COPY admin DESTINATION .)
-file(COPY comment DESTINATION .)

@@ -1,6 +1,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
 #include <markdown.h>
 #include <buffer.h>
@@ -160,4 +161,40 @@ void ArticleManager::parse_article(Article* article) {
     string content = article->content;
     string content_parsed = parse_content(content);
     article->content = content_parsed;
+}
+
+bool ArticleManager::article_to_json(const Article* article,
+                                     Json::Value* json) {
+    if (json == NULL || article == NULL) {
+        return false;
+    }
+    if (article->id == "" || article->title == "" || article->content == "") {
+        return false;
+    }
+    (*json)["id"] = article->id;
+    (*json)["title"] = article->title;
+    (*json)["contnet"] = article->content;
+    Json::Value tags;
+    for (std::vector<std::string>::const_iterator it = article->tags.begin();
+         it != article->tags.end(); ++it) {
+        std::string tag = *it;
+        tags.append(tag);
+    }
+    (*json)["tags"] = tags;
+    return true;
+}
+
+bool ArticleManager::articles_to_json(const std::vector<Article>* articles,
+                                      Json::Value* json) {
+    if (articles == NULL || json == NULL) {
+        return false;
+    }
+    for (std::vector<Article>::const_iterator it = articles->begin();
+         it != articles->end(); ++it) {
+        Article article = *it;
+        Json::Value article_json;
+        this->article_to_json(&article, &article_json);
+        json->append(article_json);
+    }
+    return false;
 }

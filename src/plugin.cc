@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string>
+#include <string>
+#include <utility>
 #include <mongo/client/dbclient.h>
+#include <jsoncpp/json/json.h>
 #include <dlfcn.h>
 #include "plugin.h"
 #include "global.h"
@@ -75,4 +78,39 @@ bool PluginManager::load_plugins() {
             }
         }
     }
+}
+
+bool PluginManager::call_hooks(std::string hook_id, const Json::Value* args,
+                               Json::Value* result) {
+    using namespace std;
+    if (hook_id == "" || !args || !result) {
+        return false;
+    }
+    bool is_success;
+    pair<HookMap::iterator, HookMap::iterator> p =
+        this->hooks.equal_range(hook_id);
+    for (HookMap::iterator it = p.first; it != p.second; ++it) {
+        Hook hook = it->second;
+        if (!hook) {
+            return false;
+        }
+        is_success = hook(hook_id, args, result);
+    }
+    return is_success;
+}
+
+bool PluginManager::add_hook(std::string hook_id, Hook hook) {
+    using namespace std;
+    if (!hook || hook_id == "") {
+        return false;
+    }
+    pair<HookMap::iterator, HookMap::iterator> p =
+        this->hooks.equal_range(hook_id);
+    for (HookMap::iterator it = p.first; it != p.second; ++it) {
+        if (it->second == hook) {
+            return false;
+        }
+    }
+    this->hooks.insert(make_pair(hook_id, hook));
+    return true;
 }

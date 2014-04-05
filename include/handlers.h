@@ -26,8 +26,6 @@ class ArticleHandler : public DustbinHandler {
     static Handler* create() {
         return new ArticleHandler;
     }
-  private:
-    std::string load_comment();
 };
 
 class ArchivesHandler : public DustbinHandler {

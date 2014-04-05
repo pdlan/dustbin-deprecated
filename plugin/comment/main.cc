@@ -3,6 +3,7 @@
 #include <sstream>
 #include "global.h"
 #include "theme.h"
+#include "plugin.h"
 
 class CommentBlockHandler : public BlockHandler{
   public:

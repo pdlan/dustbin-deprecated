@@ -76,6 +76,14 @@ bool PageHandler::get() {
         global.article.set_article_dict(article_dict, &article);
     }
     dict.ShowSection("articles");
+    Json::Value args, articles_json, page_json, result;
+    global.article.articles_to_json(&articles, &articles_json);
+    page_json["number_of_pages"] = page.number_of_pages;
+    page_json["current_page"] = current_page;
+    page_json["articles_per_page"] = articles_per_page;
+    args["articles"] = articles_json;
+    args["pageinfo"] = page_json;
+    global.plugin.call_hooks("on_show_page", &args, &result);
     global.theme.set_template_dict("page", &dict);
     this->render("page", &dict);
     return true;
@@ -95,31 +103,12 @@ bool ArticleHandler::get() {
     }
     global.article.parse_article(&article);
     global.article.set_article_dict(&dict, &article);
-    string comment = this->load_comment();
-    dict.SetValue("comment", comment);
     global.theme.set_template_dict("article", &dict);
+    Json::Value article_json, result;
+    global.article.article_to_json(&article, &article_json);
+    global.plugin.call_hooks("on_show_article", &article_json, &result);
     this->render("article", &dict);
     return true;
-}
-
-std::string ArticleHandler::load_comment() {
-    using namespace std;
-    string type = global.setting.get_str_setting("commenting-system");
-    string path = "comment/" + type + ".html";
-    FILE* file = fopen(path.c_str(), "r");
-    if (!file) {
-        return "";
-    }
-    fseek(file, 0, SEEK_END);
-    size_t length = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    char* buffer = new char[length + 1];
-    fread(buffer, length, sizeof(char), file);
-    buffer[length] = '\0';
-    string comment = buffer;
-    delete buffer;
-    fclose(file);
-    return comment;
 }
 
 bool ArchivesHandler::get() {
@@ -172,6 +161,14 @@ bool ArchivesHandler::get() {
         global.article.set_article_dict(article_dict, &article);
     }
     dict.ShowSection("articles");
+    Json::Value args, articles_json, page_json, result;
+    global.article.articles_to_json(&articles, &articles_json);
+    page_json["number_of_pages"] = page.number_of_pages;
+    page_json["current_page"] = current_page;
+    page_json["articles_per_page"] = articles_per_page;
+    args["articles"] = articles_json;
+    args["pageinfo"] = page_json;
+    global.plugin.call_hooks("on_show_archive", &args, &result);
     global.theme.set_template_dict("archives", &dict);
     this->render("archives", &dict);
     return true;
@@ -229,6 +226,15 @@ bool TagHandler::get() {
     } else {
         dict.ShowSection("articles");
     }
+    Json::Value args, articles_json, page_json, result;
+    global.article.articles_to_json(&articles, &articles_json);
+    page_json["number_of_pages"] = page.number_of_pages;
+    page_json["current_page"] = current_page;
+    page_json["articles_per_page"] = articles_per_page;
+    args["articles"] = articles_json;
+    args["pageinfo"] = page_json;
+    args["tag"] = tag;
+    global.plugin.call_hooks("on_show_tag", &args, &result);
     global.theme.set_template_dict("tag", &dict);
     this->render("tag", &dict);
     return true;
