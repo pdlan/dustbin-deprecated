@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(sundown)
-include_directories(${sundown_source_dir}/include)
+include_directories(${sundown_SOURCE_DIR}/include)
 
 set(MAIN_SRC_LIST
     src/autolink.c

@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include <string>
 #include <string>
 #include <utility>
@@ -39,25 +41,73 @@ void PluginManager::refresh() {
     using namespace std;
     using namespace mongo;
     this->destory_plugins();
-    auto_ptr<DBClientCursor> cursor =
-        global.db_conn.query(global.db_name + ".plugin");
-    while (cursor->more()) {
-        BSONObj p = cursor->next();
-        bool enabled = p.getBoolField("enabled");
-        if (!enabled) {
-            continue;
-        }
-        string name = p.getStringField("name");
-        if (name == "") {
-            continue;
-        }
-        string lib_path = "plugin/" + name + "/lib" + name + ".so";
-        void* handle = dlopen(lib_path.c_str(), RTLD_LAZY);
-        Plugin plugin;
-        plugin.name = name;
-        plugin.handle = handle;
-        this->plugins.push_back(plugin);
+    DIR* dir;
+    struct dirent* file;
+    struct stat file_stat;
+    if (!(dir = opendir("plugin"))) {
+        return;
     }
+    chdir("plugin");
+    while (file = readdir(dir)) {
+        lstat(file->d_name, &file_stat);
+        if (S_IFDIR & file_stat.st_mode) {
+            std::string plugin_path = file->d_name;
+            if (plugin_path.length() > 0 && plugin_path[0] == '.') {
+                continue;
+            }
+            string config_path = plugin_path + "/plugin.conf";
+            FILE* config_file = fopen(config_path.c_str(), "r");
+            if (!config_file) {
+                continue;
+            }
+            fseek(config_file, 0, SEEK_END);
+            size_t length = ftell(config_file);
+            fseek(config_file, 0, SEEK_SET);
+            char* buffer = new char[length];
+            fread(buffer, length, sizeof(char), config_file);
+            Json::Reader reader;
+            Json::Value plugin_config;
+            if (!reader.parse(buffer, plugin_config)) {
+                delete buffer;
+                fclose(config_file);
+                continue;
+            }
+            delete buffer;
+            fclose(config_file);
+            string lib_name = plugin_config.get("library", "").asString();
+            string name = plugin_config.get("name", "").asString();
+            string description =
+                plugin_config.get("description", "").asString();
+            if (name == "" || lib_name == "") {
+                continue;
+            }
+            string lib_path = plugin_path + "/" + lib_name;
+            void* handle = dlopen(lib_path.c_str(), RTLD_LAZY);
+            if (!handle) {
+                continue;
+            }
+            PluginInfo info;
+            info.name = name;
+            info.description = description;
+            BSONObj p = global.db_conn.findOne(global.db_name + ".plugin",
+                                               QUERY("name" << name));
+            Plugin plugin;
+            plugin.info = info;
+            plugin.handle = handle;
+            if (p.isEmpty()) {
+                plugin.is_enabled = false;
+            } else {
+                if (p.hasField("enabled") &&
+                    p.getField("enabled").type() == Bool &&
+                    p.getBoolField("enabled") == true) {
+                    plugin.is_enabled = true;
+                }
+            }
+            this->plugins.push_back(plugin);
+            
+        }
+    }
+    chdir("..");
 }
 
 bool PluginManager::load_plugins() {
@@ -66,7 +116,8 @@ bool PluginManager::load_plugins() {
          it != this->plugins.end(); ++it) {
         Plugin plugin = *it;
         void* handle = plugin.handle;
-        string name = plugin.name;
+        PluginInfo info = plugin.info;
+        string name = info.name;
         if (handle) {
             typedef void (*fun_load)(Global*);
             fun_load load = (fun_load)dlsym(handle, "load");

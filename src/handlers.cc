@@ -70,7 +70,7 @@ bool PageHandler::get() {
     for (vector<Article>::iterator it = articles.begin();
          it != articles.end(); ++it) {
         Article article = *it;
-        global.article.parse_article(&article);
+        global.article.parse_article(&article, true);
         TemplateDictionary* article_dict =
         dict.AddSectionDictionary("articles");
         global.article.set_article_dict(article_dict, &article);
@@ -147,7 +147,7 @@ bool ArchivesHandler::get() {
         global.article.get_articles(page.limit, page.skip);
     for (int i = 0, j = 0; i < articles.size(); ++i) {
         Article article = articles[i];
-        global.article.parse_article(&article);
+        global.article.parse_article(&article, true);
         time_t timestamp = article.timestamp;
         tm* timeinfo = localtime(&timestamp);
         int year = timeinfo->tm_year + 1900;
@@ -215,7 +215,7 @@ bool TagHandler::get() {
     int i = 0;
     for (; i < articles.size(); ++i) {
         Article article = articles[i];
-        global.article.parse_article(&article);
+        global.article.parse_article(&article, true);
         TemplateDictionary* article_dict =
         dict.AddSectionDictionary("articles");
         global.article.set_article_dict(article_dict, &article);

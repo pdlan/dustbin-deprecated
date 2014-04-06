@@ -3,13 +3,14 @@
 #include <vector>
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
-#include <markdown.h>
-#include <buffer.h>
-#include <html.h>
 #include "global.h"
 #include "article.h"
 
 extern Global global;
+
+void ArticleManager::initialize() {
+    this->article_parser = NULL;
+}
 
 PageInfo ArticleManager::page_articles(int current_page, int articles_per_page,
                                        std::string tag) {
@@ -131,36 +132,13 @@ void ArticleManager::set_article_dict(ctemplate::TemplateDictionary* dict,
     dict->ShowSection("tags");
 }
 
-std::string ArticleManager::parse_content(std::string content) {
+bool ArticleManager::parse_article(Article* article, bool is_short) {
     using namespace std;
-    const int OUTPUT_UNIT = 64;
-    if (content == "") {
-        return "";
+    if (!article || !this->article_parser) {
+        return false;
     }
-    struct buf* ob = bufnew(OUTPUT_UNIT);
-    struct sd_callbacks callbacks;
-	struct html_renderopt options;
-	struct sd_markdown* markdown;
-    sdhtml_renderer(&callbacks, &options, 0);
-    markdown = sd_markdown_new(0, 16, &callbacks, &options);
-    sd_markdown_render(ob, (const uint8_t*)content.c_str(), content.length(), markdown);
-    sd_markdown_free(markdown);
-    if (ob->size <= 0) {
-        return "";
-    }
-    string output((const char*)ob->data, ob->size);
-	bufrelease(ob);
-    return output;
-}
-
-void ArticleManager::parse_article(Article* article) {
-    using namespace std;
-    if (!article) {
-        return;
-    }
-    string content = article->content;
-    string content_parsed = parse_content(content);
-    article->content = content_parsed;
+    this->article_parser(article, is_short);
+    return true;
 }
 
 bool ArticleManager::article_to_json(const Article* article,
@@ -197,4 +175,12 @@ bool ArticleManager::articles_to_json(const std::vector<Article>* articles,
         json->append(article_json);
     }
     return false;
+}
+
+bool ArticleManager::set_article_parser(ArticleParser parser) {
+    if (parser == NULL || this->article_parser != NULL) {
+        return false;
+    }
+    this->article_parser = parser;
+    return true;
 }

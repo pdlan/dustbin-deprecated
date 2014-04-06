@@ -4,9 +4,14 @@
 #include <vector>
 #include <map>
 #include <jsoncpp/json/json.h>
-struct Plugin {
+struct PluginInfo {
     std::string name;
+    std::string description;
+};
+struct Plugin {
+    PluginInfo info;
     void* handle;
+    bool is_enabled;
 };
 
 typedef bool (*Hook)(std::string, const Json::Value*, Json::Value*);
