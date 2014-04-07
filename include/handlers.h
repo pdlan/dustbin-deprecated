@@ -5,9 +5,8 @@
 #include <ctemplate/template.h> 
 class DustbinHandler : public recycled::Handler {
   protected:
-    void render(std::string template_name, 
-                ctemplate::TemplateDictionary* dict, 
-                bool is_admin_template = false);
+    void render(std::string template_name,
+                ctemplate::TemplateDictionary* dict);
     void on404();
 };
 

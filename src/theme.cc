@@ -80,32 +80,16 @@ void Theme::set_blocks(std::string template_name,
 
 void Theme::render(std::string template_name,
                    std::string* output,
-                   ctemplate::TemplateDictionary* dict,
-                   bool is_admin_template) {
+                   ctemplate::TemplateDictionary* dict) {
     using namespace std;
     using namespace ctemplate;
     TemplateDictionary* layout_dict = dict->MakeCopy("layout");
-    string path;
-    if (is_admin_template) {
-        path = "admin/template/layout.html";
-    } else {
-        path = "theme/" + this->theme_path + "/template/layout.html";
-    }
-    string sub_temp_path;
-    if (is_admin_template) {
-        sub_temp_path = "admin/template/" + template_name + ".html";
-    } else {
-        sub_temp_path = "theme/" + this->theme_path + "/template/" +
-                               template_name + ".html";
-    }
+    string path = "theme/" + this->theme_path + "/template/layout.html";
+    string sub_temp_path = "theme/" + this->theme_path + "/template/" +
+                           template_name + ".html";
     string buffer;
     string title;
-    string cache_name;
-    if (is_admin_template) {
-        cache_name = "admin_" + template_name + "_title";
-    } else {
-        cache_name = template_name + "_title";
-    }
+    string cache_name = template_name + "_title";
     ExpandTemplate(cache_name, DO_NOT_STRIP, dict, &title);
     ExpandTemplate(sub_temp_path, DO_NOT_STRIP, dict, &buffer);
     layout_dict->SetValue("block_title", title);
@@ -117,7 +101,6 @@ bool Theme::set_theme(std::string name) {
     using namespace std;
     using namespace ctemplate;
     std::string theme_path;
-    this->set_admin_title_templates();
     this->static_paths["/admin/static/(.*)"] = "admin/static/";
     bool has_found = false;
     for (vector<ThemeInfo>::iterator it = this->themes.begin();
@@ -237,25 +220,6 @@ void Theme::set_title_templates() {
         if (titles[template_name].isString()) {
             string title = titles[template_name].asString();
             string cache_name = template_name + "_title";
-            StringToTemplateCache(cache_name, title, DO_NOT_STRIP);
-        }
-    }
-}
-
-void Theme::set_admin_title_templates() {
-    using namespace std;
-    using namespace ctemplate;
-    Json::Value admin;
-    if (!Theme::load_json_file("admin/title.conf", &admin)) {
-        return;
-    }
-    Json::Value::Members members = admin.getMemberNames();
-    for (Json::Value::Members::iterator it = members.begin();
-         it != members.end(); ++ it) {
-        string template_name = *it;
-        if (admin[template_name].isString()) {
-            string title = admin[template_name].asString();
-            string cache_name = "admin_" + template_name + "_title";
             StringToTemplateCache(cache_name, title, DO_NOT_STRIP);
         }
     }

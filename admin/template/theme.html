@@ -1,12 +1,32 @@
-<ul>
-  {{#themes}}
-  <li>
-  <span>{{name}}</span> by <span>{{author}}</span>
-  <form action="{{:x-get-path=/admin/}}theme/" method="post">
-    <input type="hidden" id="theme" name="theme" value="{{name}}" />
-    <input type="hidden" id="action" name="action" value="enable" />
-    <button>Enable</button>
-  </form>
-  </li>
-  {{/themes}}
-<ul>
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/css/bootstrap.min.css}}">
+    <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/css/style.css}}">
+    <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/css/font-awesome.min.css}}">
+    <script type="text/javascript" src="{{:x-get-static-file=/admin/static/js/jquery-1.11.0.min.js}}"></script>
+    <script type="text/javascript" src="{{:x-get-static-file=/admin/static/js/bootstrap.min.js}}"></script>
+    <title>Themes - {{site_name}}</title>
+  </head>
+  <body>
+    <div id="container" class="container-fluid">
+	  <div class="row">
+	    <div class="col-md-12">
+          <ul>
+            {{#themes}}
+            <li>
+            <span>{{name}}</span> by <span>{{author}}</span>
+            <form action="{{:x-get-path=/admin/}}theme/" method="post">
+              <input type="hidden" id="theme" name="theme" value="{{name}}" />
+              <input type="hidden" id="action" name="action" value="enable" />
+              <button>Enable</button>
+            </form>
+            </li>
+            {{/themes}}
+          <ul>
+	    </div>
+	  </div>
+    </div>
+  </body>
+</html>

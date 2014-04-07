@@ -1,36 +1,50 @@
-<div class="col-md-10 col-md-offset-1">
-  <header id="header">
-    <h1>Setting</h1>
-  </header>
-  <form action="{{:x-get-path=/admin/setting/}}" method="post" class="form-horizontal">
-    <div class="form-group">
-      <label for="sitename" class="col-md-2 control-label">Site name</label>
-      <div class="col-md-10">
-      <input type="text" class="form-control" id="sitename" name="sitename" value="{{site_name}}">
-      </div>
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/css/bootstrap.min.css}}">
+    <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/css/style.css}}">
+    <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/css/font-awesome.min.css}}">
+    <script type="text/javascript" src="{{:x-get-static-file=/admin/static/js/jquery-1.11.0.min.js}}"></script>
+    <script type="text/javascript" src="{{:x-get-static-file=/admin/static/js/bootstrap.min.js}}"></script>
+    <title>Basic Settings - {{site_name}}</title>
+  </head>
+  <body>
+    <div id="container" class="container-fluid">
+	  <div class="row">
+	    <div class="col-md-12">
+          <div class="col-md-10 col-md-offset-1">
+            <header id="header">
+              <h1>Basic Settings</h1>
+            </header>
+            <form action="{{:x-get-path=/admin/setting/}}" method="post" class="form-horizontal">
+              <div class="form-group">
+                <label for="sitename" class="col-md-2 control-label">Site name</label>
+                <div class="col-md-10">
+                <input type="text" class="form-control" id="sitename" name="sitename" value="{{site_name}}">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="sitedescription" class="col-md-2 control-label">Site description</label>
+                <div class="col-md-10">
+                <input type="text" class="form-control" id="sitedescription" name="sitedescription" value="{{site_description}}">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="siteurl" class="col-md-2 control-label">Site url</label>
+                <div class="col-md-10">
+                <input type="text" class="form-control" id="siteurl" name="siteurl" value="{{site_url}}">
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                  <button class="btn btn-default" type="submit">Save</button>
+                </div>
+              </div>
+            </form>
+          </div>
+	    </div>
+	  </div>
     </div>
-    <div class="form-group">
-      <label for="sitedescription" class="col-md-2 control-label">Site description</label>
-      <div class="col-md-10">
-      <input type="text" class="form-control" id="sitedescription" name="sitedescription" value="{{site_description}}">
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="siteurl" class="col-md-2 control-label">Site url</label>
-      <div class="col-md-10">
-      <input type="text" class="form-control" id="siteurl" name="siteurl" value="{{site_url}}">
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="comment" class="col-md-2 control-label">Commenting system</label>
-      <div class="col-md-10">
-      <input type="text" class="form-control" id="comment" name="comment" value="{{comment}}">
-      </div>
-    </div>
-    <div class="form-group">
-      <div class="col-md-offset-2 col-md-10">
-        <button class="btn btn-default" type="submit">Save</button>
-      </div>
-    </div>
-  </form>
-</div>
+  </body>
+</html>

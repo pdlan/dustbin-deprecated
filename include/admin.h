@@ -4,7 +4,14 @@
 #include <recycled.h>
 #include <ctemplate/template.h>
 #include "handlers.h"
-class AdminLoginHandler : public DustbinHandler {
+class AdminHandler : public recycled::Handler {
+  protected:
+    void render(std::string template_name,
+                ctemplate::TemplateDictionary* dict);
+    void on404();
+};
+
+class AdminLoginHandler : public AdminHandler {
   public:
     bool get();
     bool post();
@@ -13,7 +20,7 @@ class AdminLoginHandler : public DustbinHandler {
     }
 };
 
-class AdminLogoutHandler : public DustbinHandler {
+class AdminLogoutHandler : public AdminHandler {
   public:
     bool post();
     static Handler* create() {
@@ -21,7 +28,7 @@ class AdminLogoutHandler : public DustbinHandler {
     }
 };
 
-class AdminIndexHandler : public DustbinHandler {
+class AdminIndexHandler : public AdminHandler {
   public:
     bool get();
     static Handler* create() {
@@ -29,7 +36,7 @@ class AdminIndexHandler : public DustbinHandler {
     }
 };
 
-class AdminThemeHandler : public DustbinHandler {
+class AdminThemeHandler : public AdminHandler {
   public:
     bool get();
     bool post();
@@ -38,7 +45,7 @@ class AdminThemeHandler : public DustbinHandler {
     }
 };
 
-class AdminArticleHandler : public DustbinHandler {
+class AdminArticleHandler : public AdminHandler {
   public:
     bool get();
     bool post();
@@ -47,7 +54,7 @@ class AdminArticleHandler : public DustbinHandler {
     }
 };
 
-class AdminSettingHandler : public DustbinHandler {
+class AdminSettingHandler : public AdminHandler {
   public:
     bool get();
     bool post();

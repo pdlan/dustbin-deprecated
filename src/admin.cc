@@ -14,6 +14,26 @@
 #include "setting.h"
 #include "dustbin.h"
 
+void AdminHandler::render(std::string path,
+                          ctemplate::TemplateDictionary* dict) {
+    using namespace std;
+    using namespace ctemplate;
+    string output;
+    ExpandTemplate(path, DO_NOT_STRIP, dict, &output);
+    this->write(output);
+}
+
+void AdminHandler::on404()
+{
+    using namespace ctemplate;
+    this->set_header("Content-Type", "text/html");
+    this->conn->resp->status_code = 404;
+    this->conn->resp->status_text = "Not Found";
+    TemplateDictionary dict("404");
+    Dustbin::instance()->get_theme()->set_template_dict("404", &dict);
+    this->render("admin/template/404.html", &dict);
+}
+
 bool AdminLoginHandler::post() {
     using namespace std;
     using namespace mongo;
@@ -31,7 +51,7 @@ bool AdminLoginHandler::post() {
         TemplateDictionary dict("login");
         dustbin->get_theme()->set_template_dict("login", &dict, true);
         dict.ShowSection("failed");
-        this->render("login", &dict, true);
+        this->render("admin/template/login.html", &dict);
     }
     return true;
 }
@@ -45,7 +65,7 @@ bool AdminLoginHandler::get() {
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("login");
     dustbin->get_theme()->set_template_dict("login", &dict, true);
-    this->render("login", &dict, true);
+    this->render("admin/template/login.html", &dict);
     return true;
 }
 
@@ -73,7 +93,7 @@ bool AdminIndexHandler::get() {
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("index");
     dustbin->get_theme()->set_template_dict("index", &dict, true);
-    this->render("index", &dict, true);
+    this->render("admin/template/index.html", &dict);
     return true;
 }
 
@@ -99,7 +119,7 @@ bool AdminThemeHandler::get() {
         themes->SetValue("author", info.author);
         dict.ShowSection("themes");
     }
-    this->render("theme", &dict, true);
+    this->render("admin/template/theme.html", &dict);
     return true;
 }
 
@@ -169,9 +189,9 @@ bool AdminArticleHandler::get() {
             article->SetValue("date", date);
             article->ShowSection("articles");
     }
-        this->render("list-articles", &dict, true);
+        this->render("admin/template/list-articles.html", &dict);
     } else if (action == "new") {
-        this->render("new-article", &dict, true);
+        this->render("admin/template/new-article.html", &dict);
     } else if (action == "edit") {
         string id = this->get_regex_result(2);
         BSONObj p =
@@ -196,7 +216,7 @@ bool AdminArticleHandler::get() {
         dict.SetValue("title", title);
         dict.SetValue("content", content);
         dict.SetValue("tags", tags);
-        this->render("edit-article", &dict, true);
+        this->render("admin/template/edit-article.html", &dict);
     } else if (action == "delete") {
         Json::Value response;
         Json::FastWriter writer;
@@ -307,7 +327,7 @@ bool AdminSettingHandler::get() {
     dustbin->get_theme()->set_template_dict("setting", &dict, true);
     dict.SetValue("comment",
                   dustbin->get_setting()->get_str_setting("commenting-system"));
-    this->render("setting", &dict, true);
+    this->render("admin/template/setting.html", &dict);
     return true;
 }
 
@@ -333,6 +353,6 @@ bool AdminSettingHandler::post() {
     dustbin->get_setting()->set_setting("commenting-system", comment);
     dustbin->get_theme()->set_template_dict("setting", &dict, true);
     dict.SetValue("comment", comment);
-    this->render("setting", &dict, true);
+    this->render("admin/template/setting.html", &dict);
     return true;
 }

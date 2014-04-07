@@ -14,13 +14,12 @@
 #include "dustbin.h"
 
 void DustbinHandler::render(std::string template_name,
-                            ctemplate::TemplateDictionary* dict,
-                            bool is_admin_template) {
+                            ctemplate::TemplateDictionary* dict) {
     using namespace std;
     using namespace ctemplate;
     Theme* theme = Dustbin::instance()->get_theme();
     string output;
-    theme->render(template_name, &output, dict, is_admin_template);
+    theme->render(template_name, &output, dict);
     this->write(output);
 }
 
