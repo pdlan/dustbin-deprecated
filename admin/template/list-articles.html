@@ -13,7 +13,10 @@
   <body>
     <div id="container" class="container-fluid">
 	  <div class="row">
-	    <div class="col-md-12">
+	    <div class="col-md-2">
+        {{:x-load-admin-sidebar=articles}}
+        </div>
+	    <div class="col-md-10">
           <div class="modal fade" id="confirm-delete-article" tabindex="-1" role="dialog" aria-labelledby="confirm-delete-article-label" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
@@ -31,29 +34,31 @@
               </div>
             </div>
           </div>
-          <div class="col-md-10 col-md-offset-1">
-            <header id="header">
-              <h1>Articles</h1>
-            </header>
-            <table class="table table-condensed">
-              {{#articles}}
-              <tr articleid="{{id}}">
-                <td class="col-md-2 col-md-offset-1">
-                  <span class="meta">{{date}}</span>
-                </td>
-                <td class="col-md-7 col-md-offset-3">
-                  <a href="{{:x-get-path=/article/}}{{id}}/">{{title}}</a>
-                </td>
-                <td class="col-md-1 col-md-offset-10">
-                  <a href="{{:x-get-path=/admin/}}article/edit/{{id}}/">Edit</a>
-                </td>
-                <td class="col-md-1 col-md-offset-11">
-                  <a articleid="{{id}}" class="delete-article">Delete</a>
-                </td>
-              </tr>
-              {{/articles}}
-            </table>
-            <a href="{{:x-get-path=/admin/}}article/new/">New Article</a>
+          <div class="panel panel-default">
+            <div class="panel-heading">Articles</div>
+            <div class="panel-body">
+              <div class="col-md-12">
+                <table class="table table-condensed">
+                  {{#articles}}
+                  <tr articleid="{{id}}">
+                    <td class="col-md-2">
+                      <span class="meta">{{date}}</span>
+                    </td>
+                    <td class="col-md-8 col-md-offset-2">
+                      <a href="{{:x-get-path=/article/}}{{id}}/">{{title}}</a>
+                    </td>
+                    <td class="col-md-1 col-md-offset-10">
+                      <a href="{{:x-get-path=/admin/}}article/edit/{{id}}/">Edit</a>
+                    </td>
+                    <td class="col-md-1 col-md-offset-11">
+                      <a articleid="{{id}}" class="delete-article">Delete</a>
+                    </td>
+                  </tr>
+                  {{/articles}}
+                </table>
+                <a href="{{:x-get-path=/admin/}}article/new/">New Article</a>
+              </div>
+            </div>
           </div>
 	    </div>
 	  </div>

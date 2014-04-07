@@ -107,6 +107,7 @@ bool AdminThemeHandler::get() {
         return true;
     }
     this->set_header("Content-Type", "text/html");
+    string theme_using = dustbin->get_setting()->get_str_setting("theme");
     dustbin->get_theme()->refresh();
     TemplateDictionary dict("theme");
     dustbin->get_theme()->set_template_dict("theme", &dict, true);
@@ -117,8 +118,13 @@ bool AdminThemeHandler::get() {
         TemplateDictionary* themes = dict.AddSectionDictionary("themes");
         themes->SetValue("name", info.name);
         themes->SetValue("author", info.author);
-        dict.ShowSection("themes");
+        if (theme_using == info.name) {
+            themes->ShowSection("using");
+        } else {
+            themes->ShowSection("not_using");
+        }
     }
+    dict.ShowSection("themes");
     this->render("admin/template/theme.html", &dict);
     return true;
 }
@@ -164,11 +170,12 @@ bool AdminArticleHandler::get() {
         this->redirect("/admin/user/login/?redirect=article/list/");
         return true;
     }
-    this->set_header("Content-Type", "text/html");
+    
     TemplateDictionary dict("article");
     dustbin->get_theme()->set_template_dict("article", &dict, true);
     string action = this->get_regex_result(1);
     if (action == "list") {
+        this->set_header("Content-Type", "text/html");
         Query qu = Query();
         auto_ptr<DBClientCursor> cursor = 
          dustbin->get_db_conn()->query(dustbin->get_db_name() + ".article",
@@ -188,11 +195,13 @@ bool AdminArticleHandler::get() {
             article->SetValue("title", title);
             article->SetValue("date", date);
             article->ShowSection("articles");
-    }
+        }
         this->render("admin/template/list-articles.html", &dict);
     } else if (action == "new") {
+        this->set_header("Content-Type", "text/html");
         this->render("admin/template/new-article.html", &dict);
     } else if (action == "edit") {
+        this->set_header("Content-Type", "text/html");
         string id = this->get_regex_result(2);
         BSONObj p =
             dustbin->get_db_conn()->findOne(dustbin->get_db_name() + ".article", 
@@ -218,6 +227,7 @@ bool AdminArticleHandler::get() {
         dict.SetValue("tags", tags);
         this->render("admin/template/edit-article.html", &dict);
     } else if (action == "delete") {
+        this->set_header("Content-Type", "text/javscript");
         Json::Value response;
         Json::FastWriter writer;
         string id = this->get_regex_result(2);

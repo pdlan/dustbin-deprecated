@@ -12,10 +12,24 @@
   <body>
     <div id="container" class="container-fluid">
 	  <div class="row">
-	    <div class="col-md-12">
-          <div><a href="{{:x-get-path=/admin/}}article/list/">Articles</a></div>
-          <div><a href="{{:x-get-path=/admin/}}theme/">Theme</a></div>
-          <div><a href="{{:x-get-path=/admin/}}setting/">Setting</a></div>
+        <div class="col-md-2">
+        {{:x-load-admin-sidebar=index}}
+        </div>
+	    <div class="col-md-10">
+          <div class="panel panel-default">
+          <div class="panel-heading">Index</div>
+          <div class="panel-body">
+            <p>
+              Welcome to administrator panel.
+            </p>
+            <p>
+              Here you can customize your site and write or edit articles.
+            </p>
+            <p>
+              Click links on left to do something you want to do.
+            </p>
+          </div>
+          </div>
 	    </div>
 	  </div>
     </div>

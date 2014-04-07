@@ -7,25 +7,46 @@
     <link rel="stylesheet" type="text/css" href="{{:x-get-static-file=/admin/static/css/font-awesome.min.css}}">
     <script type="text/javascript" src="{{:x-get-static-file=/admin/static/js/jquery-1.11.0.min.js}}"></script>
     <script type="text/javascript" src="{{:x-get-static-file=/admin/static/js/bootstrap.min.js}}"></script>
+    <script type="text/javascript" src="{{:x-get-static-file=/admin/static/js/theme.js}}"></script>
     <title>Themes - {{site_name}}</title>
   </head>
   <body>
     <div id="container" class="container-fluid">
 	  <div class="row">
-	    <div class="col-md-12">
-          <ul>
-            {{#themes}}
-            <li>
-            <span>{{name}}</span> by <span>{{author}}</span>
-            <form action="{{:x-get-path=/admin/}}theme/" method="post">
-              <input type="hidden" id="theme" name="theme" value="{{name}}" />
-              <input type="hidden" id="action" name="action" value="enable" />
-              <button>Enable</button>
-            </form>
-            </li>
-            {{/themes}}
-          <ul>
+	    <div class="col-md-2">
+        {{:x-load-admin-sidebar=theme}}
+        </div>
+	    <div class="col-md-10">
+          <div class="panel panel-default">
+            <div class="panel-heading">Themes</div>
+            <div class="panel-body">
+              <div class="col-md-12">
+                <ul class="list-group">
+                  <table class="table table-condensed">
+                  <tr>
+                    <th class="col-md-4">Name</th>
+                    <th class="col-md-4 col-md-offset-4">Author</th>
+                    <th class="col-md-2 col-md-offset-8">Status</th>
+                    <th class="col-md-2 col-md-offset-10">Operating</th>
+                  </tr>
+                  {{#themes}}
+                  <tr>
+                    <td class="col-md-4">{{name}}</td>
+                    <td class="col-md-4 col-md-offset-4">{{author}}</td>
+                    <td class="col-md-2 col-md-offset-8">
+                    {{#using}}Using{{/using}}
+                    {{#not_using}}Not using{{/not_using}}
+                    </td>
+                    <td class="col-md-2 col-md-offset-10"><a themename="{{name}}" class="enable-theme" href="#">Enable</a></td>
+                  </tr>
+                  {{/themes}}
+                  </table>            
+                </ul>
+              </div>
+            </div>
+          </div>
 	    </div>
+	  </div>
 	  </div>
     </div>
   </body>

@@ -7,13 +7,13 @@ $(document).ready(function(){
     $('.really-delete').click(function() {
         $.get('/admin/article/delete/' + article_to_delete + '/',
             function(result) {
-                var obj = $.parseJSON(result);
-                if (obj['status'] == "success") {
+                if (result['status'] == "success") {
                     var selector_str = 'tr[articleid=\'' + article_to_delete + '\']';
                     $(selector_str).remove();
                     $('#confirm-delete-article').modal('toggle');
                 }
-            }
+            },
+            'json'
         );
     });
 });

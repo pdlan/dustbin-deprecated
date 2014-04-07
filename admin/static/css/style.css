@@ -11,5 +11,9 @@
 }
 
 .tag {
-    margin-left: 5px
+  margin-left: 5px
+}
+
+#sidebar {
+  height: 100%
 }

@@ -91,6 +91,20 @@ void PlusModifier::Modify(const char* in, size_t inlen,
     outbuf->Emit(buf.str());
 }
 
+void LoadAdminSidebarModifier::Modify(const char* in, size_t inlen,
+                                      const PerExpandData* per_expand_data,
+                                      ExpandEmitter* outbuf, 
+                                      const std::string& arg) const {
+    using namespace std;
+    using namespace ctemplate;
+    string active = arg.substr(1, arg.length() - 1);
+    TemplateDictionary dict("sidebar");
+    dict.ShowSection("active_" + active);
+    Template* temp =
+        Template::GetTemplate("admin/template/sidebar.html", DO_NOT_STRIP);
+    temp->Expand(outbuf, &dict);
+}
+
 bool ModifierManager::load_modifiers(Json::Value* language) {
     Dustbin* dustbin = Dustbin::instance();
     std::string url = dustbin->get_setting()->get_str_setting("site-url");
@@ -104,9 +118,13 @@ bool ModifierManager::load_modifiers(Json::Value* language) {
         return false;
     }
     if (!AddModifier("x-get-static-file=", &this->get_static_file_modifier)) {
-        false;
+        return false;
     }
     if (!AddModifier("x-plus=", &this->plus_modifier)) {
-        false;
+        return false;
+    }
+    if (!AddModifier("x-load-admin-sidebar=",
+        &this->load_admin_sidebar_modifier)) {
+        return false;
     }
 }

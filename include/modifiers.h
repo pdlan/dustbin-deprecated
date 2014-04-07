@@ -39,6 +39,11 @@ class PlusModifier : public ctemplate::TemplateModifier {
     MODIFY_SIGNATURE_;
 };
 
+class LoadAdminSidebarModifier : public ctemplate::TemplateModifier {
+  public:
+    MODIFY_SIGNATURE_;
+};
+
 class ModifierManager {
   public:
     bool load_modifiers(Json::Value* language);
@@ -47,6 +52,7 @@ class ModifierManager {
     GetPathModifier get_path_modifier;
     GetStaticFileModifier get_static_file_modifier;
     PlusModifier plus_modifier;
+    LoadAdminSidebarModifier load_admin_sidebar_modifier;
 };
 #undef MODIFY_SIGNATURE_
 #endif
