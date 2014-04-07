@@ -3,11 +3,11 @@
 #include <sstream>
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
+#include "dustbin.h"
+#include "setting.h"
 #include "modifiers.h"
-#include "global.h"
 
 using namespace ctemplate;
-extern Global global;
 
 void FormatTimeModifier::Modify(const char* in, size_t inlen,
                                 const PerExpandData* per_expand_data,
@@ -92,9 +92,10 @@ void PlusModifier::Modify(const char* in, size_t inlen,
 }
 
 bool ModifierManager::load_modifiers(Json::Value* language) {
-    this->get_path_modifier.set_url(global.setting.get_str_setting("site-url"));
-    this->get_static_file_modifier.set_url(
-        global.setting.get_str_setting("static-url"));
+    Dustbin* dustbin = Dustbin::instance();
+    std::string url = dustbin->get_setting()->get_str_setting("site-url");
+    this->get_path_modifier.set_url(url);
+    this->get_static_file_modifier.set_url(url);
     this->format_time_modifier.set_language(language);
     if (!AddModifier("x-format-time=", &this->format_time_modifier)) {
         return false;

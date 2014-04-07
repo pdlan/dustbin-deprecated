@@ -4,15 +4,10 @@
 #include <string>
 #include <recycled.h>
 #include <jsoncpp/json/json.h>
-#include <mongo/client/dbclient.h>
 #include "handlers.h"
 #include "admin.h"
-#include "setting.h"
-#include "global.h"
 #include "install.h"
-
-extern Global global;
-Global global;
+#include "dustbin.h"
 
 bool initialize(std::string config_path, 
                 recycled::Server** server, 
@@ -89,17 +84,9 @@ bool initialize(std::string config_path,
     }
     string db_host = root.get("db_host", "localhost").asString();
     string db_name = root.get("db_name", "").asString();
-    try {
-        global.db_conn.connect(db_host);
-    } catch (const mongo::DBException &e) {
-        printf("caught %s\n", e.what());
+    Dustbin* dustbin = Dustbin::instance();
+    if (!dustbin->connect_db(db_host, db_name)) {
         return false;
     }
-    global.db_name = db_name;
-    global.auth.set_db_config(&global.db_conn, db_name);
-    global.theme.initialize();
-    global.theme.set_theme(global.setting.get_str_setting("theme"));
-    global.article.initialize();
-    global.plugin.initialize();
     return true;
 }

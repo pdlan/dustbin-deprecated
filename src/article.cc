@@ -3,10 +3,8 @@
 #include <vector>
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
-#include "global.h"
+#include "dustbin.h"
 #include "article.h"
-
-extern Global global;
 
 void ArticleManager::initialize() {
     this->article_parser = NULL;
@@ -15,14 +13,17 @@ void ArticleManager::initialize() {
 PageInfo ArticleManager::page_articles(int current_page, int articles_per_page,
                                        std::string tag) {
     using namespace mongo;
+    Dustbin* dustbin = Dustbin::instance();
     PageInfo info;
     int articles_count;
     if (tag != "") {
-        articles_count = global.db_conn.count(global.db_name + ".article",
-                                              BSON("tag" << tag));
+        articles_count =
+            dustbin->get_db_conn()->count(dustbin->get_db_name() + ".article",
+                                         BSON("tag" << tag));
     } else {
-        articles_count = global.db_conn.count(global.db_name + ".article",
-                                              BSONObj());
+        articles_count =
+            dustbin->get_db_conn()->count(dustbin->get_db_name() + ".article",
+                                          BSONObj());
     }
     if (articles_count == 0) {
         info.limit = 0;
@@ -45,16 +46,19 @@ std::vector<Article> ArticleManager::get_articles(int limit, int skip,
                                                   std::string tag) {
     using namespace std;
     using namespace mongo;
+    Dustbin* dustbin = Dustbin::instance();
     auto_ptr<DBClientCursor> cursor;
     vector<Article> articles;
     if (tag == "") {
         Query qu = Query();
-        cursor = global.db_conn.query(global.db_name + ".article",
-                                      qu.sort("time", -1), limit, skip);
+        cursor =
+            dustbin->get_db_conn()->query(dustbin->get_db_name() + ".article",
+                                          qu.sort("time", -1), limit, skip);
     } else {
         Query qu = QUERY("tag" << tag);
-        cursor = global.db_conn.query(global.db_name + ".article",
-                                      qu.sort("time", -1), limit, skip);
+        cursor =
+            dustbin->get_db_conn()->query(dustbin->get_db_name() + ".article",
+                                          qu.sort("time", -1), limit, skip);
     }
     while (cursor->more()) {
         BSONObj p = cursor->next();
@@ -85,11 +89,13 @@ std::vector<Article> ArticleManager::get_articles(int limit, int skip,
 bool ArticleManager::get_one_article(std::string id, Article* article) {
     using namespace std;
     using namespace mongo;
+    Dustbin* dustbin = Dustbin::instance();
     if (!article) {
         return false;
     }
-    BSONObj p = global.db_conn.findOne(global.db_name + ".article",
-                                       QUERY("id" << id));
+    BSONObj p =
+        dustbin->get_db_conn()->findOne(dustbin->get_db_name() + ".article",
+                                        QUERY("id" << id));
     if (p.isEmpty()) {
         return false;
     }

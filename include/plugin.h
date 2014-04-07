@@ -4,19 +4,20 @@
 #include <vector>
 #include <map>
 #include <jsoncpp/json/json.h>
+typedef bool (*Hook)(std::string, const Json::Value*, Json::Value*);
+typedef std::pair<std::string, Hook> HookPair;
+typedef std::multimap<std::string, Hook> HookMap;
+
 struct PluginInfo {
     std::string name;
     std::string description;
 };
+
 struct Plugin {
     PluginInfo info;
     void* handle;
     bool is_enabled;
 };
-
-typedef bool (*Hook)(std::string, const Json::Value*, Json::Value*);
-typedef std::pair<std::string, Hook> HookPair;
-typedef std::multimap<std::string, Hook> HookMap;
 
 class PluginManager {
   public:

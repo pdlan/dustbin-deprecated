@@ -1,15 +1,17 @@
 #include <time.h>
 #include <iostream>
 #include <mongo/client/dbclient.h>
-#include "global.h"
+#include "dustbin.h"
+#include "setting.h"
+#include "auth.h"
 #include "install.h"
-
-extern Global global;
 
 void Install::install() {
     //TODO
     using namespace std;
     using namespace mongo;
+    Dustbin* dustbin = Dustbin::instance();
+    Setting* setting = dustbin->get_setting();
     cout << "Please input your username:";
     string username;
     getline(cin, username);
@@ -32,24 +34,24 @@ void Install::install() {
     string comment;
     getline(cin, comment);
     cout << "Installing...\n";
-    global.setting.set_setting("site-name", site_name);
-    global.setting.set_setting("site-description", site_description);
-    global.setting.set_setting("site-url", site_url);
-    global.setting.set_setting("static-url", site_url);
-    global.setting.set_setting("theme", theme);
-    global.setting.set_setting("commenting-system", comment);
+    setting->set_setting("site-name", site_name);
+    setting->set_setting("site-description", site_description);
+    setting->set_setting("site-url", site_url);
+    setting->set_setting("static-url", site_url);
+    setting->set_setting("theme", theme);
+    setting->set_setting("commenting-system", comment);
     string password_encoded = Auth::SHA256(password);
-    global.db_conn.insert(global.db_name + ".user",
-                          BSON("username" << username << 
-                               "password" << password_encoded));
+    dustbin->get_db_conn()->insert(dustbin->get_db_name() + ".article",
+                                   BSON("username" << username << 
+                                        "password" << password_encoded));
     string content = "Congratulation! You have installed Dustbin!";
     BSONArrayBuilder tags;
     tags.append("hello");
-    global.db_conn.insert(global.db_name + ".article", 
-                          BSON("id" << "Hello"
-                               << "content" << content
-                               << "tag" << tags.arr()
-                               << "title" << "Hello"
-                               << "time" << (int)time(0)));
+    dustbin->get_db_conn()->insert(dustbin->get_db_name() + ".article",
+                                   BSON("id" << "Hello" <<
+                                       "content" << content <<
+                                       "tag" << tags.arr() <<
+                                       "title" << "Hello" <<
+                                       "time" << (int)time(0)));
     cout << "Finished.\n";
 }

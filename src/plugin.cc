@@ -8,9 +8,8 @@
 #include <jsoncpp/json/json.h>
 #include <dlfcn.h>
 #include "plugin.h"
-#include "global.h"
-
-extern Global global;
+#include "theme.h"
+#include "dustbin.h"
 
 PluginManager::~PluginManager() {
     this->destory_plugins();
@@ -40,6 +39,7 @@ void PluginManager::destory_plugins() {
 void PluginManager::refresh() {
     using namespace std;
     using namespace mongo;
+    Dustbin* dustbin = Dustbin::instance();
     this->destory_plugins();
     DIR* dir;
     struct dirent* file;
@@ -89,8 +89,8 @@ void PluginManager::refresh() {
             PluginInfo info;
             info.name = name;
             info.description = description;
-            BSONObj p = global.db_conn.findOne(global.db_name + ".plugin",
-                                               QUERY("name" << name));
+            BSONObj p = dustbin->get_db_conn()->findOne(
+                dustbin->get_db_name() + ".plugin", QUERY("name" << name));
             Plugin plugin;
             plugin.info = info;
             plugin.handle = handle;
@@ -112,6 +112,7 @@ void PluginManager::refresh() {
 
 bool PluginManager::load_plugins() {
     using namespace std;
+    Dustbin* dustbin = Dustbin::instance();
     for (vector<Plugin>::iterator it = this->plugins.begin();
          it != this->plugins.end(); ++it) {
         Plugin plugin = *it;
@@ -119,10 +120,10 @@ bool PluginManager::load_plugins() {
         PluginInfo info = plugin.info;
         string name = info.name;
         if (handle) {
-            typedef void (*fun_load)(Global*);
+            typedef void (*fun_load)(Dustbin*);
             fun_load load = (fun_load)dlsym(handle, "load");
             if (load) {
-                load(&global);
+                load(dustbin);
             } else {
                 printf("Unable to load plugin %s\n", name.c_str());
                 continue;

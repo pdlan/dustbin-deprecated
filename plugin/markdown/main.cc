@@ -4,15 +4,16 @@
 #include <markdown.h>
 #include <buffer.h>
 #include <html.h>
-#include "global.h"
-#include "theme.h"
-#include "plugin.h"
+#include "dustbin.h"
 #include "article.h"
+
+Dustbin* dustbin;
 
 bool MarkdownParser(Article* article, bool is_short);
 
-extern "C" void load(Global* global) {
-    global->article.set_article_parser(MarkdownParser);
+extern "C" void load(Dustbin* dustbin) {
+    ::dustbin = dustbin;
+    dustbin->get_article()->set_article_parser(MarkdownParser);
 }
 
 bool MarkdownParser(Article* article, bool is_short) {

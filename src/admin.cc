@@ -11,15 +11,15 @@
 #include "handlers.h"
 #include "auth.h"
 #include "theme.h"
-#include "global.h"
-
-extern Global global;
+#include "setting.h"
+#include "dustbin.h"
 
 bool AdminLoginHandler::post() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
-    if (global.auth.login(this->conn) == Auth::success) {
+    Dustbin* dustbin = Dustbin::instance();
+    if (dustbin->get_auth()->login(this->conn) == Auth::success) {
         string location = this->get_argument("redirect");
         if (location != "") {
             this->redirect("/admin/" + location + "/");
@@ -29,7 +29,7 @@ bool AdminLoginHandler::post() {
     } else {
         this->set_header("Content-Type", "text/html");
         TemplateDictionary dict("login");
-        global.theme.set_template_dict("login", &dict, true);
+        dustbin->get_theme()->set_template_dict("login", &dict, true);
         dict.ShowSection("failed");
         this->render("login", &dict, true);
     }
@@ -40,10 +40,11 @@ bool AdminLoginHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
+    Dustbin* dustbin = Dustbin::instance();
     string action = this->get_regex_result(1);
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("login");
-    global.theme.set_template_dict("login", &dict, true);
+    dustbin->get_theme()->set_template_dict("login", &dict, true);
     this->render("login", &dict, true);
     return true;
 }
@@ -52,10 +53,11 @@ bool AdminLogoutHandler::post() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
-    if (global.auth.auth(this->conn) != Auth::success) {
+    Dustbin* dustbin = Dustbin::instance();
+    if (dustbin->get_auth()->auth(this->conn) != Auth::success) {
         return true;
     }
-    global.auth.logout(this->conn);
+    dustbin->get_auth()->logout(this->conn);
     return true;
 }
 
@@ -63,13 +65,14 @@ bool AdminIndexHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
-    if (global.auth.auth(this->conn) != Auth::success) {
+    Dustbin* dustbin = Dustbin::instance();
+    if (dustbin->get_auth()->auth(this->conn) != Auth::success) {
         this->redirect("/admin/user/login/");
         return true;
     }
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("index");
-    global.theme.set_template_dict("index", &dict, true);
+    dustbin->get_theme()->set_template_dict("index", &dict, true);
     this->render("index", &dict, true);
     return true;
 }
@@ -78,15 +81,16 @@ bool AdminThemeHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
-    if (global.auth.auth(this->conn) != Auth::success) {
+    Dustbin* dustbin = Dustbin::instance();
+    if (dustbin->get_auth()->auth(this->conn) != Auth::success) {
         this->redirect("/admin/user/login/?redirect=theme/");
         return true;
     }
     this->set_header("Content-Type", "text/html");
-    global.theme.refresh();
+    dustbin->get_theme()->refresh();
     TemplateDictionary dict("theme");
-    global.theme.set_template_dict("theme", &dict, true);
-    const vector<ThemeInfo>* themes = global.theme.get_themes_info();
+    dustbin->get_theme()->set_template_dict("theme", &dict, true);
+    const vector<ThemeInfo>* themes = dustbin->get_theme()->get_themes_info();
     for (vector<ThemeInfo>::const_iterator it = themes->begin();
          it != themes->end(); ++ it) {
         ThemeInfo info = *it;
@@ -103,21 +107,22 @@ bool AdminThemeHandler::post() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
+    Dustbin* dustbin = Dustbin::instance();
     Json::Value response;
     Json::FastWriter writer;
     string action = this->get_post_argument("action");
     string theme = this->get_post_argument("theme");
     this->set_header("Content-Type", "text/javascript");
-    if (global.auth.auth(this->conn) != Auth::success) {
+    if (dustbin->get_auth()->auth(this->conn) != Auth::success) {
         response["status"] = "failed";
         response["reason"] = "forbidden";
         this->write(writer.write(response));
         return true;
     }
     if (action == "enable") {
-        if (global.theme.set_theme(theme)) {
+        if (dustbin->get_theme()->set_theme(theme)) {
             response["status"] = "success";
-            global.db_conn.update(global.db_name + ".setting",
+            dustbin->get_db_conn()->update(dustbin->get_db_name() + ".setting",
                                   QUERY("key" << "theme"),
                                   BSON("key" << "theme" << "value" << theme));
             this->write(writer.write(response));
@@ -134,18 +139,20 @@ bool AdminArticleHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
-    if (global.auth.auth(this->conn) != Auth::success) {
+    Dustbin* dustbin = Dustbin::instance();
+    if (dustbin->get_auth()->auth(this->conn) != Auth::success) {
         this->redirect("/admin/user/login/?redirect=article/list/");
         return true;
     }
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("article");
-    global.theme.set_template_dict("article", &dict, true);
+    dustbin->get_theme()->set_template_dict("article", &dict, true);
     string action = this->get_regex_result(1);
     if (action == "list") {
         Query qu = Query();
         auto_ptr<DBClientCursor> cursor = 
-         global.db_conn.query(global.db_name + ".article", qu.sort("time", -1));
+         dustbin->get_db_conn()->query(dustbin->get_db_name() + ".article",
+                                       qu.sort("time", -1));
         while (cursor->more()) {
             BSONObj p = cursor->next();
             string id = p.getStringField("id");
@@ -167,8 +174,9 @@ bool AdminArticleHandler::get() {
         this->render("new-article", &dict, true);
     } else if (action == "edit") {
         string id = this->get_regex_result(2);
-        BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
-                                           QUERY("id" << id));
+        BSONObj p =
+            dustbin->get_db_conn()->findOne(dustbin->get_db_name() + ".article", 
+                                            QUERY("id" << id));
         if (p.isEmpty()) {
             this->on404();
             return true;
@@ -193,14 +201,15 @@ bool AdminArticleHandler::get() {
         Json::Value response;
         Json::FastWriter writer;
         string id = this->get_regex_result(2);
-        BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
-                                           QUERY("id" << id));
+        BSONObj p =
+            dustbin->get_db_conn()->findOne(dustbin->get_db_name() + ".article", 
+                                            QUERY("id" << id));
         if (p.isEmpty()) {
             response["status"] = "failed";
             response["reson"] = "notexist";
         } else {
             response["status"] = "success";
-            global.db_conn.remove(global.db_name + ".article",
+            dustbin->get_db_conn()->remove(dustbin->get_db_name() + ".article",
                                   QUERY("id" << id));
         }
         this->write(writer.write(response));
@@ -213,7 +222,8 @@ bool AdminArticleHandler::post() {
     using namespace mongo;
     using namespace ctemplate;
     using namespace boost;
-    if (global.auth.auth(this->conn) != Auth::success) {
+    Dustbin* dustbin = Dustbin::instance();
+    if (dustbin->get_auth()->auth(this->conn) != Auth::success) {
         this->redirect("/admin/user/login/?redirect=article/list/");
         return true;
     }
@@ -225,14 +235,15 @@ bool AdminArticleHandler::post() {
         string tag_str = this->get_post_argument("tags");
         ostringstream id;
         id << title;
-        BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
-                                           QUERY("id" << id.str()));
+        BSONObj p =
+            dustbin->get_db_conn()->findOne(dustbin->get_db_name() + ".article", 
+                                            QUERY("id" << id.str()));
         //Generate different id for the articles having the same title.
         for (int i = 1; !p.isEmpty(); ++ i) {
             id.str("");
             id << title << "-" << i;
-            p = global.db_conn.findOne(global.db_name + ".article", 
-                                       QUERY("id" << id.str()));
+            p = dustbin->get_db_conn()->findOne(dustbin->get_db_name() + ".article", 
+                                                QUERY("id" << id.str()));
         }
         regex re(",");
         sregex_token_iterator rit(tag_str.begin(), tag_str.end(), re, -1);
@@ -242,7 +253,7 @@ bool AdminArticleHandler::post() {
             string tag = *rit++;
             tags.append(tag);
         }
-        global.db_conn.insert(global.db_name + ".article", 
+        dustbin->get_db_conn()->insert(dustbin->get_db_name() + ".article", 
                               BSON("id" << id.str()
                                    << "content" << content
                                    << "tag" << tags.arr()
@@ -251,7 +262,8 @@ bool AdminArticleHandler::post() {
         this->redirect("/article/" + id.str() + "/");
     } else if (action == "edit") {
         string id = this->get_regex_result(2);
-        BSONObj p = global.db_conn.findOne(global.db_name + ".article", 
+        BSONObj p =
+            dustbin->get_db_conn()->findOne(dustbin->get_db_name() + ".article", 
                                            QUERY("id" << id));
         if (p.isEmpty()) {
             this->on404();
@@ -269,13 +281,13 @@ bool AdminArticleHandler::post() {
             string tag = *rit++;
             tags.append(tag);
         }
-        global.db_conn.update(global.db_name + ".article", 
-                              QUERY("id" << id), 
-                              BSON("id" << id 
-                                   << "content" << content
-                                   << "tag" << tags.arr()
-                                   << "title" << title
-                                   << "time" << (int)timestamp));
+        dustbin->get_db_conn()->update(dustbin->get_db_name() + ".article", 
+                                       QUERY("id" << id), 
+                                       BSON("id" << id <<
+                                            "content" << content <<
+                                            "tag" << tags.arr() <<
+                                            "title" << title <<
+                                            "time" << (int)timestamp));
         this->redirect("/article/" + id + "/");
     }
     return true;
@@ -285,15 +297,16 @@ bool AdminSettingHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
-    if (global.auth.auth(this->conn) != Auth::success) {
+    Dustbin* dustbin = Dustbin::instance();
+    if (dustbin->get_auth()->auth(this->conn) != Auth::success) {
         this->redirect("/admin/user/login/?redirect=setting/");
         return true;
     }
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("setting");
-    global.theme.set_template_dict("setting", &dict, true);
+    dustbin->get_theme()->set_template_dict("setting", &dict, true);
     dict.SetValue("comment",
-                  global.setting.get_str_setting("commenting-system"));
+                  dustbin->get_setting()->get_str_setting("commenting-system"));
     this->render("setting", &dict, true);
     return true;
 }
@@ -303,7 +316,8 @@ bool AdminSettingHandler::post() {
     using namespace mongo;
     using namespace ctemplate;
     using namespace boost;
-    if (global.auth.auth(this->conn) != Auth::success) {
+    Dustbin* dustbin = Dustbin::instance();
+    if (dustbin->get_auth()->auth(this->conn) != Auth::success) {
         this->redirect("/admin/user/login/?redirect=setting/");
         return true;
     }
@@ -313,11 +327,11 @@ bool AdminSettingHandler::post() {
     string site_url = this->get_post_argument("siteurl");
     string site_description = this->get_post_argument("sitedescription");
     string comment = this->get_post_argument("comment");
-    global.setting.set_setting("site-name", site_name);
-    global.setting.set_setting("site-url", site_url);
-    global.setting.set_setting("site-description", site_description);
-    global.setting.set_setting("commenting-system", comment);
-    global.theme.set_template_dict("setting", &dict, true);
+    dustbin->get_setting()->set_setting("site-name", site_name);
+    dustbin->get_setting()->set_setting("site-url", site_url);
+    dustbin->get_setting()->set_setting("site-description", site_description);
+    dustbin->get_setting()->set_setting("commenting-system", comment);
+    dustbin->get_theme()->set_template_dict("setting", &dict, true);
     dict.SetValue("comment", comment);
     this->render("setting", &dict, true);
     return true;

@@ -3,11 +3,9 @@
 #include <string>
 #include <jsoncpp/json/json.h>
 #include <recycled.h>
-#include "global.h"
+#include "dustbin.h"
 #include "setting.h"
 #include "theme.h"
-
-extern Global global;
 
 Theme::~Theme() {
     for (std::map<std::string, std::vector<BlockHandler*>*>::iterator it =
@@ -25,12 +23,13 @@ void Theme::set_template_dict(std::string template_name,
                               bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
+    Dustbin* dustbin = Dustbin::instance();
     dict->SetValue("site_name",
-                   global.setting.get_str_setting("site-name"));
+                   dustbin->get_setting()->get_str_setting("site-name"));
     dict->SetValue("site_description",
-                   global.setting.get_str_setting("site-description"));
+                   dustbin->get_setting()->get_str_setting("site-description"));
     dict->SetValue("site_url",
-                   global.setting.get_str_setting("site-url"));
+                   dustbin->get_setting()->get_str_setting("site-url"));
     if (is_admin_template) {
         return;
     }

@@ -8,29 +8,31 @@
 #include <jsoncpp/json/json.h>
 #include <ctemplate/template.h>
 #include "handlers.h"
-#include "global.h"
+#include "theme.h"
+#include "plugin.h"
 #include "article.h"
-
-extern Global global;
+#include "dustbin.h"
 
 void DustbinHandler::render(std::string template_name,
                             ctemplate::TemplateDictionary* dict,
                             bool is_admin_template) {
     using namespace std;
     using namespace ctemplate;
+    Theme* theme = Dustbin::instance()->get_theme();
     string output;
-    global.theme.render(template_name, &output, dict, is_admin_template);
+    theme->render(template_name, &output, dict, is_admin_template);
     this->write(output);
 }
 
 void DustbinHandler::on404()
 {
     using namespace ctemplate;
+    Theme* theme = Dustbin::instance()->get_theme();
     this->set_header("Content-Type", "text/html");
     this->conn->resp->status_code = 404;
     this->conn->resp->status_text = "Not Found";
     TemplateDictionary dict("404");
-    global.theme.set_template_dict("404", &dict);
+    theme->set_template_dict("404", &dict);
     this->render("404", &dict);
 }
 
@@ -38,6 +40,10 @@ bool PageHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
+    Dustbin* dustbin = Dustbin::instance();
+    Theme* theme = dustbin->get_theme();
+    ArticleManager* article_manager = dustbin->get_article();
+    PluginManager* plugin = dustbin->get_plugin();
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("page");
     string page_str = this->get_regex_result(1);
@@ -45,14 +51,14 @@ bool PageHandler::get() {
     if (page_str != "") {
         current_page = atoi(page_str.c_str());
     }
-    const Json::Value* config = global.theme.get_config();
+    const Json::Value* config = theme->get_config();
     int articles_per_page = 20;
     if (config->get("articles-per-page", 0).isObject()) {
         Json::Value obj = (*config)["articles-per-page"];
         articles_per_page = obj.get("page", 20).asInt();
     }
     PageInfo page =
-        global.article.page_articles(current_page, articles_per_page);
+        article_manager->page_articles(current_page, articles_per_page);
     if (current_page > page.number_of_pages) {
         this->on404();
         return true;
@@ -66,25 +72,25 @@ bool PageHandler::get() {
     dict.SetIntValue("current_page", current_page);
     dict.SetIntValue("number_of_pages", page.number_of_pages);
     vector<Article> articles =
-        global.article.get_articles(page.limit, page.skip);
+        article_manager->get_articles(page.limit, page.skip);
     for (vector<Article>::iterator it = articles.begin();
          it != articles.end(); ++it) {
         Article article = *it;
-        global.article.parse_article(&article, true);
+        article_manager->parse_article(&article, true);
         TemplateDictionary* article_dict =
         dict.AddSectionDictionary("articles");
-        global.article.set_article_dict(article_dict, &article);
+        article_manager->set_article_dict(article_dict, &article);
     }
     dict.ShowSection("articles");
     Json::Value args, articles_json, page_json, result;
-    global.article.articles_to_json(&articles, &articles_json);
+    article_manager->articles_to_json(&articles, &articles_json);
     page_json["number_of_pages"] = page.number_of_pages;
     page_json["current_page"] = current_page;
     page_json["articles_per_page"] = articles_per_page;
     args["articles"] = articles_json;
     args["pageinfo"] = page_json;
-    global.plugin.call_hooks("on_show_page", &args, &result);
-    global.theme.set_template_dict("page", &dict);
+    plugin->call_hooks("on_show_page", &args, &result);
+    theme->set_template_dict("page", &dict);
     this->render("page", &dict);
     return true;
 }
@@ -93,20 +99,24 @@ bool ArticleHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
+    Dustbin* dustbin = Dustbin::instance();
+    Theme* theme = dustbin->get_theme();
+    ArticleManager* article_manager = dustbin->get_article();
+    PluginManager* plugin = dustbin->get_plugin();
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("article");
     string id = this->get_regex_result(1);
     Article article;
-    if (!global.article.get_one_article(id, &article)) {
+    if (!article_manager->get_one_article(id, &article)) {
         this->on404();
         return true;
     }
-    global.article.parse_article(&article);
-    global.article.set_article_dict(&dict, &article);
-    global.theme.set_template_dict("article", &dict);
+    article_manager->parse_article(&article);
+    article_manager->set_article_dict(&dict, &article);
+    theme->set_template_dict("article", &dict);
     Json::Value article_json, result;
-    global.article.article_to_json(&article, &article_json);
-    global.plugin.call_hooks("on_show_article", &article_json, &result);
+    article_manager->article_to_json(&article, &article_json);
+    plugin->call_hooks("on_show_article", &article_json, &result);
     this->render("article", &dict);
     return true;
 }
@@ -115,6 +125,10 @@ bool ArchivesHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
+    Dustbin* dustbin = Dustbin::instance();
+    Theme* theme = dustbin->get_theme();
+    ArticleManager* article_manager = dustbin->get_article();
+    PluginManager* plugin = dustbin->get_plugin();
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("archives");
     string page_str = this->get_regex_result(1);
@@ -122,14 +136,14 @@ bool ArchivesHandler::get() {
     if (page_str != "") {
         current_page = atoi(page_str.c_str());
     }
-    const Json::Value* config = global.theme.get_config();
+    const Json::Value* config = theme->get_config();
     int articles_per_page = 20;
     if (config->get("articles-per-page", 0).isObject()) {
         Json::Value obj = (*config)["articles-per-page"];
         articles_per_page = obj.get("archives", 20).asInt();
     }
     PageInfo page =
-        global.article.page_articles(current_page, articles_per_page);
+        article_manager->page_articles(current_page, articles_per_page);
     if (current_page > page.number_of_pages) {
         this->on404();
         return true;
@@ -144,10 +158,10 @@ bool ArchivesHandler::get() {
     dict.SetIntValue("number_of_pages", page.number_of_pages);
     TemplateDictionary* year_dict;
     vector<Article> articles =
-        global.article.get_articles(page.limit, page.skip);
+        article_manager->get_articles(page.limit, page.skip);
     for (int i = 0, j = 0; i < articles.size(); ++i) {
         Article article = articles[i];
-        global.article.parse_article(&article, true);
+        article_manager->parse_article(&article, true);
         time_t timestamp = article.timestamp;
         tm* timeinfo = localtime(&timestamp);
         int year = timeinfo->tm_year + 1900;
@@ -158,18 +172,18 @@ bool ArchivesHandler::get() {
         }
         TemplateDictionary* article_dict =
         year_dict->AddSectionDictionary("articles");
-        global.article.set_article_dict(article_dict, &article);
+        article_manager->set_article_dict(article_dict, &article);
     }
     dict.ShowSection("articles");
     Json::Value args, articles_json, page_json, result;
-    global.article.articles_to_json(&articles, &articles_json);
+    article_manager->articles_to_json(&articles, &articles_json);
     page_json["number_of_pages"] = page.number_of_pages;
     page_json["current_page"] = current_page;
     page_json["articles_per_page"] = articles_per_page;
     args["articles"] = articles_json;
     args["pageinfo"] = page_json;
-    global.plugin.call_hooks("on_show_archive", &args, &result);
-    global.theme.set_template_dict("archives", &dict);
+    plugin->call_hooks("on_show_archive", &args, &result);
+    theme->set_template_dict("archives", &dict);
     this->render("archives", &dict);
     return true;
 }
@@ -178,6 +192,10 @@ bool TagHandler::get() {
     using namespace std;
     using namespace mongo;
     using namespace ctemplate;
+    Dustbin* dustbin = Dustbin::instance();
+    Theme* theme = dustbin->get_theme();
+    ArticleManager* article_manager = dustbin->get_article();
+    PluginManager* plugin = dustbin->get_plugin();
     this->set_header("Content-Type", "text/html");
     TemplateDictionary dict("tag");
     string page_str = this->get_argument("page");
@@ -190,14 +208,14 @@ bool TagHandler::get() {
         this->on404();
         return true;
     }
-    const Json::Value* config = global.theme.get_config();
+    const Json::Value* config = theme->get_config();
     int articles_per_page = 20;
     if (config->get("articles-per-page", 0).isObject()) {
         Json::Value obj = (*config)["articles-per-page"];
         articles_per_page = obj.get("tag", 20).asInt();
     }
     PageInfo page =
-        global.article.page_articles(current_page, articles_per_page, tag);
+        article_manager->page_articles(current_page, articles_per_page, tag);
     if (current_page > page.number_of_pages) {
         this->on404();
         return true;
@@ -211,14 +229,14 @@ bool TagHandler::get() {
     dict.SetIntValue("current_page", current_page);
     dict.SetIntValue("number_of_pages", page.number_of_pages);
     vector<Article> articles =
-        global.article.get_articles(page.limit, page.skip, tag);
+        article_manager->get_articles(page.limit, page.skip, tag);
     int i = 0;
     for (; i < articles.size(); ++i) {
         Article article = articles[i];
-        global.article.parse_article(&article, true);
+        article_manager->parse_article(&article, true);
         TemplateDictionary* article_dict =
         dict.AddSectionDictionary("articles");
-        global.article.set_article_dict(article_dict, &article);
+        article_manager->set_article_dict(article_dict, &article);
     }
     if (i == 0) {
         this->on404();
@@ -227,15 +245,15 @@ bool TagHandler::get() {
         dict.ShowSection("articles");
     }
     Json::Value args, articles_json, page_json, result;
-    global.article.articles_to_json(&articles, &articles_json);
+    article_manager->articles_to_json(&articles, &articles_json);
     page_json["number_of_pages"] = page.number_of_pages;
     page_json["current_page"] = current_page;
     page_json["articles_per_page"] = articles_per_page;
     args["articles"] = articles_json;
     args["pageinfo"] = page_json;
     args["tag"] = tag;
-    global.plugin.call_hooks("on_show_tag", &args, &result);
-    global.theme.set_template_dict("tag", &dict);
+    plugin->call_hooks("on_show_tag", &args, &result);
+    theme->set_template_dict("tag", &dict);
     this->render("tag", &dict);
     return true;
 }

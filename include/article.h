@@ -2,6 +2,7 @@
 #define DUSTBIN_INCLUDE_ARTICLE_H
 #include <string>
 #include <vector>
+#include <ctemplate/template.h>
 #include <jsoncpp/json/json.h>
 struct Article {
     std::string id;

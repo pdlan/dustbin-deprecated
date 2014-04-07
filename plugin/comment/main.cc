@@ -1,31 +1,30 @@
 #include <stdio.h>
 #include <string>
 #include <sstream>
-#include "global.h"
+#include "dustbin.h"
+#include "setting.h"
+#include "article.h"
 #include "theme.h"
-#include "plugin.h"
 
-class CommentBlockHandler : public BlockHandler{
+class CommentBlockHandler : public BlockHandler {
   public:
     std::string handle();
     inline std::string get_block_name() {return "comment";}
     inline std::string get_template_name() {return "article";}
 };
 
-mongo::DBClientConnection* db_conn;
-std::string db_name;
-Setting* setting;
+Dustbin* dustbin;
 CommentBlockHandler comment_block_handler;
 
 std::string CommentBlockHandler::handle() {
     using namespace std;
     using namespace mongo;
-    string type = setting->get_str_setting("comment-type");
+    string type = dustbin->get_setting()->get_str_setting("comment-type");
     ostringstream buf;
     buf.str("");
     if (type == "duoshuo") {
         string short_name =
-            setting->get_str_setting("comment-duoshuo-shortname");
+         dustbin->get_setting()->get_str_setting("comment-duoshuo-shortname");
         buf
         << "<!-- Duoshuo Comment BEGIN -->" << endl
         << "<div class=\"ds-thread\"></div>" << endl
@@ -45,7 +44,7 @@ std::string CommentBlockHandler::handle() {
         << "<!-- Duoshuo Comment END -->" << endl;
     } else if (type == "disqus") {
         string short_name =
-            setting->get_str_setting("comment-disqus-shortname");
+         dustbin->get_setting()->get_str_setting("comment-disqus-shortname");
         buf
         << "<script type=\"text/javascript\">" << endl
         << "var disqus_title = \"\";" << endl
@@ -62,14 +61,12 @@ std::string CommentBlockHandler::handle() {
     return buf.str();
 }
 
-extern "C" void load(Global* global) {
-    if (!global->theme.add_block(&comment_block_handler)) {
+extern "C" void load(Dustbin* dustbin) {
+    ::dustbin = dustbin;
+    if (!dustbin->get_theme()->add_block(&comment_block_handler)) {
         printf("[comment]Unable to add comment block.\n");
         return;
     }
-    db_conn = &global->db_conn;
-    db_name = global->db_name;
-    setting = &global->setting;
 }
 
 extern "C" void destory() {

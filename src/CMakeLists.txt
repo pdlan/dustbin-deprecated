@@ -13,6 +13,7 @@ set(MAIN_SRC_LIST
     setting.cc
     plugin.cc
     install.cc
+    dustbin.cc
 )
 
 add_executable(dustbin ${MAIN_SRC_LIST})
